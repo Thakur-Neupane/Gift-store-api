@@ -1,7 +1,7 @@
 import express from "express";
 import cookieSession from "cookie-session";
 import passport from "passport";
-// import OAuth2Strategy from "passport-google-oauth2";
+
 
 const app = express();
 const PORT = process.env.PORT || 8001;
@@ -37,14 +37,7 @@ app.use(morgan("tiny"));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// passport.use(
-//   new OAuth2Strategy({
-//     clientID: process.env.Clientid,
-//     clientSecret: process.env.Clientsecret,
-//     callbackURL: "/auth/google/callback",
-//     scope: ["profile", "email"],
-//   })
-// );
+
 
 // apis
 import routers from "./src/routers/routers.js";
