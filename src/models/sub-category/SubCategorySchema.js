@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const categorySchema = new mongoose.Schema(
+const subCategorySchema = new mongoose.Schema(
   {
     title: {
       type: String,
@@ -16,6 +16,12 @@ const categorySchema = new mongoose.Schema(
       index: true,
     },
     status: { type: String, default: "inactive" },
+
+    parent: {
+      type: mongoose.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
   },
 
   {
@@ -23,4 +29,4 @@ const categorySchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("Category", categorySchema); //categories
+export default mongoose.model("SubCategory", subCategorySchema); //categories
