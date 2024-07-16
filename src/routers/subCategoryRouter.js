@@ -108,14 +108,19 @@ router.get("/sort", async (req, res, next) => {
 });
 
 // Update categories
-router.put("/edit/:slug", async (req, res) => {
+router.put("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
-    const updatedSubCategory = await updateSubCategory(slug, req.body);
+    const updatedSubCategory = await updateSubCategory(slug, {
+      title: req.body.title,
+      slug: slugify(req.body.title),
+      status: req.body.status,
+    });
 
     if (updatedSubCategory) {
       return res.status(200).json({
         status: "success",
+        message: "Sub-Category updated successfully.",
         data: updatedSubCategory,
       });
     } else {

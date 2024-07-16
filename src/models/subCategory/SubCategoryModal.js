@@ -17,7 +17,7 @@ export const getASubCategory = (slug) => {
 };
 
 export const deleteSubCategory = (slug) => {
-  return CategorySchema.findOneAndDelete({ slug });
+  return SubCategorySchema.findOneAndDelete({ slug });
 };
 
 export const updateSubCategory = (slug, updateData) => {
