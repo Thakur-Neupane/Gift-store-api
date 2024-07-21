@@ -26,6 +26,9 @@ export const updateSubCategory = (slug, updateData) => {
   });
 };
 
+export const getAllSubCategoriesByParentCatId = (parentCatId) => {
+  return SubCategorySchema.find({ parentCatId });
+};
 // export const deleteManyCategory = (filter) => {
 //   return CategorySchema.deleteMany(filter);
 // };

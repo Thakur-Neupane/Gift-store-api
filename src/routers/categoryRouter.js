@@ -130,4 +130,20 @@ router.put("/:slug", async (req, res) => {
   }
 });
 
+// Get all sub-categories by parent category id
+router.get("/:parentCatId", async (req, res, next) => {
+  try {
+    const { parentCatId } = req.params;
+    const subCategories = await SubCategory.find({ parentCatId }).exec();
+
+    res.json({
+      status: "success",
+      message: "Sub-categories fetched successfully",
+      subCategories,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

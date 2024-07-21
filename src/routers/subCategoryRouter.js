@@ -5,6 +5,7 @@ import {
   deleteSubCategory,
   getASubCategory,
   getAllSubCategories,
+  getAllSubCategoriesByParentCatId,
   insertSubCategory,
   sortSubCategories,
   updateSubCategory,
@@ -116,7 +117,6 @@ router.put("/:slug", async (req, res) => {
       slug: slugify(req.body.title),
       status: req.body.status,
     });
-
     if (updatedSubCategory) {
       return res.status(200).json({
         status: "success",
@@ -135,6 +135,22 @@ router.put("/:slug", async (req, res) => {
       status: "error",
       message: "An error occurred while updating the sub-category.",
     });
+  }
+});
+
+// Get all sub-categories by parent category id
+router.get("/:parentCatId", async (req, res, next) => {
+  try {
+    const { parentCatId } = req.params;
+    const subCategories = await getAllSubCategoriesByParentCatId(parentCatId);
+
+    res.json({
+      status: "success",
+      message: "Sub-categories fetched successfully",
+      subCategories,
+    });
+  } catch (error) {
+    next(error);
   }
 });
 
