@@ -9,6 +9,7 @@ import {
   sortCategories,
   updateCategory,
 } from "../models/category/CategoryModel.js";
+import { getAllSubCategoriesByParentCatId } from "../models/subCategory/SubCategoryModal.js";
 
 // Create category
 router.post("/", async (req, res, next) => {
@@ -134,7 +135,9 @@ router.put("/:slug", async (req, res) => {
 router.get("/:parentCatId", async (req, res, next) => {
   try {
     const { parentCatId } = req.params;
-    const subCategories = await SubCategory.find({ parentCatId }).exec();
+    const subCategories = await getAllSubCategoriesByParentCatId
+      .find({ parentCatId })
+      .exec();
 
     res.json({
       status: "success",

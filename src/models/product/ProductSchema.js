@@ -4,9 +4,9 @@ const productSchema = new mongoose.Schema(
   {
     status: {
       type: String,
-      default: "inactive",
+      default: "active",
     },
-    title: {
+    name: {
       type: String,
       trim: true,
       required: true,
@@ -22,18 +22,14 @@ const productSchema = new mongoose.Schema(
     },
     sku: {
       type: String,
-      unique: true,
+      unique: [
+        true,
+        "This SKU has been already used for the another product, please use different SKU",
+      ],
       required: true,
-      validate: {
-        validator: async function (v) {
-          const count = await this.model("Product").countDocuments({ sku: v });
-          return count === 0;
-        },
-        message: (props) =>
-          `The SKU '${props.value}' is already in use. Please choose a different SKU.`,
-      },
     },
     category: {
+      // Adjusted field name to match 'parentCatId'
       type: mongoose.Types.ObjectId,
       ref: "Category",
       required: true,
@@ -64,10 +60,6 @@ const productSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    parentCatId: {
-      type: mongoose.Types.ObjectId,
-      required: true,
-    },
     description: {
       type: String,
       required: true,
@@ -84,9 +76,6 @@ const productSchema = new mongoose.Schema(
         ref: "SubCategory",
       },
     ],
-    images: {
-      type: [String],
-    },
     shipping: {
       type: String,
       enum: ["Yes", "No"],
@@ -97,6 +86,12 @@ const productSchema = new mongoose.Schema(
     brand: {
       type: String,
     },
+
+    // images: [
+    //   {
+    //     type: String,
+    //   },
+    // ],
     // ratings: [
     //   {
     //     star: Number,

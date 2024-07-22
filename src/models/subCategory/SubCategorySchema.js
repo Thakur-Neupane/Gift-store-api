@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const subCategorySchema = new mongoose.Schema(
   {
     title: {
@@ -15,7 +16,11 @@ const subCategorySchema = new mongoose.Schema(
       lowercase: true,
       index: true,
     },
-    status: { type: String, default: "inactive" },
+
+    status: {
+      type: String,
+      default: "inactive",
+    },
 
     parent: {
       type: mongoose.Types.ObjectId,
@@ -29,4 +34,14 @@ const subCategorySchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("subCategory", subCategorySchema); //categories
+let SubCategory;
+
+try {
+  // Check if the model is already defined
+  SubCategory = mongoose.model("subCategory");
+} catch (error) {
+  // If not defined, define and export the model
+  SubCategory = mongoose.model("subCategory", subCategorySchema);
+}
+
+export default SubCategory;
