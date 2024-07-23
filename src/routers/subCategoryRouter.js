@@ -11,7 +11,7 @@ import {
   updateSubCategory,
 } from "../models/subcategory/SubCategoryModal.js";
 
-// Create category
+// Create sub-category
 router.post("/", async (req, res, next) => {
   try {
     const { title, parentCatId } = req.body;
@@ -22,7 +22,7 @@ router.post("/", async (req, res, next) => {
       const subCat = await insertSubCategory({
         title,
         slug,
-        parent: parentCatId,
+        parentCatId,
       });
 
       if (subCat?._id) {
@@ -47,30 +47,28 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// Get all categories
+// Get all sub-categories
 router.get("/", async (req, res, next) => {
   try {
     const categories = await getAllSubCategories();
     res.json({
       status: "success",
-      message: "Fetched the new Subcategories.",
+      message: "Fetched all sub-categories.",
       categories,
     });
-
-    res.json({});
   } catch (error) {
     next(error);
   }
 });
 
-// get one category
+// Get sub-category by slug
 router.get("/:slug", async (req, res, next) => {
   try {
     const { slug } = req.params;
     const category = await getASubCategory(slug);
     res.json({
       status: "success",
-      message: "New Subcategory has been added",
+      message: "Sub-category fetched successfully",
       category,
     });
   } catch (error) {
@@ -78,19 +76,19 @@ router.get("/:slug", async (req, res, next) => {
   }
 });
 
-// delete category
+// Delete sub-category by slug
 router.delete("/:slug", async (req, res, next) => {
   try {
     const { slug } = req.params;
     const deletedCategory = await deleteSubCategory(slug);
 
     if (!deletedCategory) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ message: "Sub-category not found" });
     }
 
     return res.json({
       status: "success",
-      message: "The Sub-category has been deleted successfully.",
+      message: "Sub-category has been deleted successfully.",
       deletedCategory,
     });
   } catch (error) {
@@ -98,17 +96,7 @@ router.delete("/:slug", async (req, res, next) => {
   }
 });
 
-// Sort categories
-router.get("/sort", async (req, res, next) => {
-  try {
-    const categories = await sortSubCategories();
-    res.json(categories);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Update categories
+// Update sub-category by slug
 router.put("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
@@ -120,7 +108,7 @@ router.put("/:slug", async (req, res) => {
     if (updatedSubCategory) {
       return res.status(200).json({
         status: "success",
-        message: "Sub-Category updated successfully.",
+        message: "Sub-category updated successfully.",
         data: updatedSubCategory,
       });
     } else {
@@ -139,7 +127,7 @@ router.put("/:slug", async (req, res) => {
 });
 
 // Get all sub-categories by parent category id
-router.get("/:parentCatId", async (req, res, next) => {
+router.get("/parent/:parentCatId", async (req, res, next) => {
   try {
     const { parentCatId } = req.params;
     const subCategories = await getAllSubCategoriesByParentCatId(parentCatId);
