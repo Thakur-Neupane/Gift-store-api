@@ -1,7 +1,5 @@
 import express from "express";
 import cookieSession from "cookie-session";
-import passport from "passport";
-
 
 const app = express();
 const PORT = process.env.PORT || 8001;
@@ -22,22 +20,8 @@ app.use(
   })
 );
 
-app.use(
-  cookieSession({
-    name: "session",
-    keys: process.env.SECRET,
-    maxAge: 24 * 60 * 60 * 100,
-  })
-);
-
 app.use(express.json());
 app.use(morgan("tiny"));
-
-// Set up passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-
 
 // apis
 import routers from "./src/routers/routers.js";
@@ -54,7 +38,7 @@ app.get("/", (req, res, next) => {
 });
 
 app.use("*", (req, res, next) => {
-  const err = new Error("404 Page nto found");
+  const err = new Error("404 Page not found");
   err.statusCode = 404;
   next(err);
 });

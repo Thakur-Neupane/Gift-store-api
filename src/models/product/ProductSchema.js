@@ -73,7 +73,7 @@ const productSchema = new mongoose.Schema(
     subCategories: [
       {
         type: mongoose.Types.ObjectId,
-        ref: "SubCategory",
+        ref: "subCategory",
       },
     ],
     shipping: {

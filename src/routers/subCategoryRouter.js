@@ -16,34 +16,40 @@ router.post("/", async (req, res, next) => {
   try {
     const { title, parentCatId } = req.body;
 
-    if (typeof title === "string" && title.length) {
-      const slug = slugify(title, { lower: true });
-
-      const subCat = await insertSubCategory({
-        title,
-        slug,
-        parentCatId,
+    if (!title || !parentCatId) {
+      return res.status(400).json({
+        status: "error",
+        message: "Title and Parent Category ID are required.",
       });
-
-      if (subCat?._id) {
-        return res.json({
-          status: "success",
-          message: "New sub-category has been added",
-        });
-      }
     }
 
-    res.json({
+    const slug = slugify(title, { lower: true });
+
+    const subCat = await insertSubCategory({
+      title,
+      slug,
+      parent: parentCatId, // Ensure field name matches schema
+    });
+
+    if (subCat._id) {
+      return res.status(201).json({
+        status: "success",
+        message: "New sub-category has been added",
+      });
+    }
+
+    res.status(500).json({
       status: "error",
       message: "Unable to add sub-category, try again later",
     });
   } catch (error) {
-    if (error.message.includes("E11000 duplicate")) {
-      error.message =
-        "This sub-category slug already exists, please change the name and try again.";
-      error.statusCode = 200;
-    }
-    next(error);
+    console.error("Error creating sub-category:", error);
+    res.status(500).json({
+      status: "error",
+      message: error.message.includes("E11000")
+        ? "This sub-category slug already exists, please change the name and try again."
+        : "An error occurred.",
+    });
   }
 });
 
