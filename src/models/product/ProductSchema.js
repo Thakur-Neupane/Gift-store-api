@@ -24,15 +24,14 @@ const productSchema = new mongoose.Schema(
       type: String,
       unique: [
         true,
-        "This SKU has been already used for the another product, please use different SKU",
+        "This SKU has already been used, please use a different SKU",
       ],
       required: true,
     },
     category: {
-      // Adjusted field name to match 'parentCatId'
       type: mongoose.Types.ObjectId,
       ref: "Category",
-      required: true,
+      required: true, // Matches with front-end 'category' field
     },
     qty: {
       type: Number,
@@ -63,7 +62,7 @@ const productSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
-      maxlength: 2000,
+      maxlength: 2000, // Aligned with the front-end
       text: true,
     },
     thumbnail: {
@@ -73,7 +72,7 @@ const productSchema = new mongoose.Schema(
     subCategories: [
       {
         type: mongoose.Types.ObjectId,
-        ref: "subCategory",
+        ref: "SubCategory",
       },
     ],
     shipping: {
@@ -86,25 +85,10 @@ const productSchema = new mongoose.Schema(
     brand: {
       type: String,
     },
-
-    // images: [
-    //   {
-    //     type: String,
-    //   },
-    // ],
-    // ratings: [
-    //   {
-    //     star: Number,
-    //     postedBy: {
-    //       type: mongoose.Types.ObjectId,
-    //       ref: "User",
-    //     },
-    //   },
-    // ],
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model("Product", productSchema); //Product schema
+export default mongoose.model("Product", productSchema);

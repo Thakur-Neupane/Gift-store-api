@@ -9,7 +9,8 @@ import {
   sortCategories,
   updateCategory,
 } from "../models/category/CategoryModel.js";
-import { getAllSubCategoriesByParentCatId } from "../models/subCategory/SubCategoryModal.js";
+
+import SubCategory from "../models/subCategory/SubCategorySchema.js";
 
 // Create category
 router.post("/", async (req, res, next) => {
@@ -132,20 +133,13 @@ router.put("/:slug", async (req, res) => {
 });
 
 // Get all sub-categories by parent category id
-router.get("/:parentCatId", async (req, res, next) => {
+router.get("/sub-category/:_id", async (req, res, next) => {
   try {
-    const { parentCatId } = req.params;
-    const subCategories = await getAllSubCategoriesByParentCatId
-      .find({ parentCatId })
-      .exec();
-
-    res.json({
-      status: "success",
-      message: "Sub-categories fetched successfully",
-      subCategories,
-    });
-  } catch (error) {
-    next(error);
+    const subs = await SubCategory.find({ parent: req.params._id }).exec();
+    res.json(subs);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

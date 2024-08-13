@@ -9,15 +9,23 @@ import {
 
 router.post("/", async (req, res, next) => {
   try {
-    const { name } = req.body;
+    const { name, sku, slug } = req.body;
 
-    const slug = slugify(name, {
-      lower: true,
-    });
+    // Check for missing required fields
+    if (!name || !sku || !req.body.qty || !req.body.price) {
+      return res.status(400).json({
+        status: "error",
+        message: "Required fields are missing",
+      });
+    }
+
+    // Generate slug if not provided
+    const generatedSlug = slugify(name, { lower: true });
+    const productSlug = slug || generatedSlug;
 
     const prod = await insertProduct({
       ...req.body,
-      slug,
+      slug: productSlug,
     });
 
     if (prod?._id) {
@@ -34,7 +42,7 @@ router.post("/", async (req, res, next) => {
   } catch (error) {
     if (error.message.includes("E11000 duplicate")) {
       error.message =
-        "This product slug or sku already exist, please change the name of the Product or sku and try agian.";
+        "This product slug or SKU already exists. Please change the name of the product or SKU and try again.";
       error.statusCode = 400;
     }
     next(error);

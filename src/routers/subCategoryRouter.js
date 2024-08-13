@@ -7,7 +7,6 @@ import {
   getAllSubCategories,
   getAllSubCategoriesByParentCatId,
   insertSubCategory,
-  sortSubCategories,
   updateSubCategory,
 } from "../models/subcategory/SubCategoryModal.js";
 
