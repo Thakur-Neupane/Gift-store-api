@@ -8,76 +8,66 @@ const productSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      trim: true,
       required: true,
-      maxlength: 32,
-      text: true,
     },
     slug: {
       type: String,
       unique: true,
-      index: true,
-      required: true,
-      lowercase: true,
     },
     sku: {
       type: String,
-      unique: [
-        true,
-        "This SKU has already been used, please use a different SKU",
-      ],
+      unique: true,
       required: true,
     },
     category: {
-      type: mongoose.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      required: true, // Matches with front-end 'category' field
+      required: true,
     },
+    subCategories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "SubCategory",
+      },
+    ],
     qty: {
       type: Number,
       required: true,
     },
-    sold: {
-      type: Number,
-      default: 0,
-    },
     price: {
       type: Number,
       required: true,
-      trim: true,
-      maxlength: 32,
     },
     salesPrice: {
       type: Number,
-      default: null,
     },
     salesStart: {
       type: Date,
-      default: null,
     },
     salesEnd: {
       type: Date,
-      default: null,
     },
     description: {
       type: String,
       required: true,
-      maxlength: 2000, // Aligned with the front-end
-      text: true,
     },
     thumbnail: {
-      type: String,
-      default: "",
+      type: String, // URL of the thumbnail image
     },
-    subCategories: [
+    images: [
       {
-        type: mongoose.Types.ObjectId,
-        ref: "SubCategory",
+        public_id: {
+          type: String,
+          required: true,
+        },
+        url: {
+          type: String,
+          required: true,
+        },
       },
     ],
     shipping: {
       type: String,
-      enum: ["Yes", "No"],
     },
     color: {
       type: String,
@@ -86,9 +76,7 @@ const productSchema = new mongoose.Schema(
       type: String,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("Product", productSchema);

@@ -26,7 +26,7 @@ app.use(morgan("tiny"));
 // apis
 import routers from "./src/routers/routers.js";
 
-routers.forEach(({ path, middlewawers }) => app.use(path, ...middlewawers));
+routers.forEach(({ path, middlewares }) => app.use(path, ...middlewares));
 
 // ErrorHandler
 

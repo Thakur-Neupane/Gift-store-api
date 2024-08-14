@@ -1,31 +1,60 @@
 import express from "express";
 const router = express.Router();
 import slugify from "slugify";
-
 import {
   getAllProducts,
+  getOneProduct,
   insertProduct,
+  deleteProduct,
+  updateProduct,
 } from "../models/product/ProductModel.js";
 
+// Create a new product
 router.post("/", async (req, res, next) => {
   try {
-    const { name, sku, slug } = req.body;
+    const {
+      name,
+      sku,
+      category,
+      qty,
+      price,
+      salesPrice,
+      salesStart,
+      salesEnd,
+      description,
+      shipping,
+      color,
+      brand,
+      subCategories,
+      thumbnail,
+    } = req.body;
 
-    // Check for missing required fields
-    if (!name || !sku || !req.body.qty || !req.body.price) {
-      return res.status(400).json({
-        status: "error",
-        message: "Required fields are missing",
-      });
-    }
+    // if (!name || !sku || !category || !qty || !price) {
+    //   return res.status(400).json({
+    //     status: "error",
+    //     message: "Required fields are missing",
+    //   });
+    // }
 
-    // Generate slug if not provided
     const generatedSlug = slugify(name, { lower: true });
-    const productSlug = slug || generatedSlug;
+    const productSlug = req.body.slug || generatedSlug;
 
     const prod = await insertProduct({
-      ...req.body,
+      name,
+      sku,
       slug: productSlug,
+      category,
+      qty,
+      price,
+      salesPrice,
+      salesStart,
+      salesEnd,
+      description,
+      thumbnail,
+      shipping,
+      color,
+      brand,
+      subCategories: subCategories || [],
     });
 
     if (prod?._id) {
@@ -49,6 +78,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+// Get all products
 router.get("/", async (req, res, next) => {
   try {
     const products = await getAllProducts();
@@ -56,6 +86,76 @@ router.get("/", async (req, res, next) => {
       status: "success",
       message: "",
       products,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get a single product by slug
+router.get("/:slug", async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const product = await getOneProduct(slug);
+
+    if (!product) {
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      message: "",
+      product,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update a product by slug
+router.put("/:slug", async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const updateData = req.body;
+
+    const updatedProduct = await updateProduct(slug, updateData);
+
+    if (!updatedProduct) {
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      message: "Product updated successfully",
+      product: updatedProduct,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete a product by slug
+router.delete("/:slug", async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const deletedProduct = await deleteProduct(slug);
+
+    if (!deletedProduct) {
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      message: "Product deleted successfully",
     });
   } catch (error) {
     next(error);
