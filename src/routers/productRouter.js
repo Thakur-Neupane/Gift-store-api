@@ -29,12 +29,12 @@ router.post("/", async (req, res, next) => {
       thumbnail,
     } = req.body;
 
-    // if (!name || !sku || !category || !qty || !price) {
-    //   return res.status(400).json({
-    //     status: "error",
-    //     message: "Required fields are missing",
-    //   });
-    // }
+    if (!name || !sku || !category || !qty || !price) {
+      return res.status(400).json({
+        status: "error",
+        message: "Required fields are missing",
+      });
+    }
 
     const generatedSlug = slugify(name, { lower: true });
     const productSlug = req.body.slug || generatedSlug;
@@ -141,10 +141,10 @@ router.put("/:slug", async (req, res, next) => {
 });
 
 // Delete a product by slug
-router.delete("/:slug", async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
-    const { slug } = req.params;
-    const deletedProduct = await deleteProduct(slug);
+    const { id } = req.params;
+    const deletedProduct = await deleteProduct(id);
 
     if (!deletedProduct) {
       return res.status(404).json({
@@ -158,7 +158,11 @@ router.delete("/:slug", async (req, res, next) => {
       message: "Product deleted successfully",
     });
   } catch (error) {
-    next(error);
+    console.error("Error in delete route:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Error deleting product: " + error.message,
+    });
   }
 });
 

@@ -8,16 +8,16 @@ export const getAllProducts = () => {
   return ProductSchema.find();
 };
 
-export const getOneProduct = (slug) => {
-  return ProductSchema.findOne({ slug });
+export const deleteProduct = (_id) => {
+  return ProductSchema.findByIdAndDelete(_id);
 };
 
-export const deleteProduct = (slug) => {
-  return ProductSchema.findOneAndDelete({ slug });
+export const getOneProduct = (id) => {
+  return ProductSchema.findById(id);
 };
 
-export const updateProduct = (slug, updateData) => {
-  return ProductSchema.findOneAndUpdate({ slug }, updateData, {
+export const updateProduct = (id, updateData) => {
+  return ProductSchema.findByIdAndUpdate(id, updateData, {
     new: true,
   });
 };
