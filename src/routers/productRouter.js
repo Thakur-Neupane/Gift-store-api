@@ -1,6 +1,7 @@
 import express from "express";
 const router = express.Router();
 import slugify from "slugify";
+import ProductSchema from "../models/product/ProductSchema.js";
 import {
   getAllProducts,
   getOneProduct,
@@ -93,10 +94,19 @@ router.get("/", async (req, res, next) => {
 });
 
 // Get a single product by slug
-router.get("/:slug", async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
-    const { slug } = req.params;
-    const product = await getOneProduct(slug);
+    const { id } = req.params;
+    console.log("Received ID in route:", id);
+    if (!id) {
+      return res.status(400).json({
+        status: "error",
+        message: "ID parameter is missing",
+      });
+    }
+
+    const product = await ProductSchema.findById(id);
+    console.log("Product fetched from DB:", product);
 
     if (!product) {
       return res.status(404).json({
@@ -111,6 +121,7 @@ router.get("/:slug", async (req, res, next) => {
       product,
     });
   } catch (error) {
+    console.error("Error in route handler:", error);
     next(error);
   }
 });
