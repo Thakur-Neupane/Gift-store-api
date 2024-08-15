@@ -240,4 +240,26 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
+// Get a specific number of products
+router.get("/count/:count", async (req, res, next) => {
+  try {
+    const { count } = req.params;
+    const products = await ProductSchema.find().limit(parseInt(count));
+
+    if (!products.length) {
+      return res.status(404).json({
+        status: "error",
+        message: "No products found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

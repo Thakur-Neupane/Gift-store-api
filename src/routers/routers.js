@@ -16,7 +16,7 @@ export default [
   },
   {
     path: "/api/v1/products",
-    middlewares: [auth, productRouter],
+    middlewares: [productRouter],
   },
   {
     path: "/api/v1/sub-categories",
