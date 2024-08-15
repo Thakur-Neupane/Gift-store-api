@@ -4,13 +4,73 @@ import slugify from "slugify";
 import ProductSchema from "../models/product/ProductSchema.js";
 import {
   getAllProducts,
-  getOneProduct,
-  insertProduct,
   deleteProduct,
   updateProduct,
 } from "../models/product/ProductModel.js";
+import cloudinary from "cloudinary";
+import Product from "../models/product/ProductSchema.js";
 
-// Create a new product
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Route to handle image uploads
+router.post("/uploadimages", async (req, res) => {
+  try {
+    const { images } = req.body;
+
+    if (!images || !Array.isArray(images)) {
+      return res.status(400).json({ message: "No images data provided" });
+    }
+
+    const uploadPromises = images.map((image) =>
+      cloudinary.v2.uploader.upload(image, {
+        folder: "product_images",
+        resource_type: "image",
+        allowed_formats: ["jpg", "jpeg", "png"],
+      })
+    );
+
+    const results = await Promise.all(uploadPromises);
+
+    const uploadedImages = results.map((result) => ({
+      url: result.secure_url,
+      public_id: result.public_id,
+    }));
+
+    res.json(uploadedImages);
+  } catch (error) {
+    console.error("Image upload error:", error);
+    res.status(500).json({ message: "Image upload failed", error });
+  }
+});
+
+// Route to handle image removal
+router.post("/removeimages", async (req, res) => {
+  try {
+    const { public_id } = req.body;
+
+    if (!public_id) {
+      return res.status(400).json({ message: "Public ID is required" });
+    }
+
+    const result = await cloudinary.v2.uploader.destroy(public_id);
+
+    if (result.result === "ok") {
+      res.json({ message: "Image removed successfully" });
+    } else {
+      res.status(500).json({ message: "Image removal failed" });
+    }
+  } catch (error) {
+    console.error("Image remove error:", error);
+    res.status(500).json({ message: "Image removal failed", error });
+  }
+});
+
+// Route to create a new product
 router.post("/", async (req, res, next) => {
   try {
     const {
@@ -28,6 +88,7 @@ router.post("/", async (req, res, next) => {
       brand,
       subCategories,
       thumbnail,
+      images,
     } = req.body;
 
     if (!name || !sku || !category || !qty || !price) {
@@ -40,7 +101,8 @@ router.post("/", async (req, res, next) => {
     const generatedSlug = slugify(name, { lower: true });
     const productSlug = req.body.slug || generatedSlug;
 
-    const prod = await insertProduct({
+    // Create the product
+    const prod = await Product.create({
       name,
       sku,
       slug: productSlug,
@@ -52,6 +114,7 @@ router.post("/", async (req, res, next) => {
       salesEnd,
       description,
       thumbnail,
+      images,
       shipping,
       color,
       brand,
@@ -62,6 +125,7 @@ router.post("/", async (req, res, next) => {
       return res.json({
         status: "success",
         message: "New product has been added",
+        data: prod,
       });
     }
 
@@ -93,7 +157,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Get a single product by slug
+// Get a single product by _id
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -126,14 +190,13 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// Update a product by slug
-router.put("/:slug", async (req, res, next) => {
+// Update a product by _id
+router.put("/update/:id", async (req, res, next) => {
   try {
-    const { slug } = req.params;
+    const { id } = req.params;
     const updateData = req.body;
 
-    const updatedProduct = await updateProduct(slug, updateData);
-
+    const updatedProduct = await updateProduct(id, updateData);
     if (!updatedProduct) {
       return res.status(404).json({
         status: "error",
@@ -151,7 +214,7 @@ router.put("/:slug", async (req, res, next) => {
   }
 });
 
-// Delete a product by slug
+// Delete a product by _id
 router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;

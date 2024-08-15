@@ -16,8 +16,8 @@ export const getOneProduct = (_id) => {
   return ProductSchema.findById(_id);
 };
 
-export const updateProduct = (id, updateData) => {
-  return ProductSchema.findByIdAndUpdate(id, updateData, {
+export const updateProduct = (_id, updateData) => {
+  return ProductSchema.findByIdAndUpdate(_id, updateData, {
     new: true,
   });
 };
