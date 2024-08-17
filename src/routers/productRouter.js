@@ -243,7 +243,7 @@ router.delete("/:id", async (req, res, next) => {
 router.get("/count/:count", async (req, res, next) => {
   try {
     const { count } = req.params;
-    const products = await ProductSchema.find().limit(parseInt(count));
+    const products = await Product.find().limit(parseInt(count));
 
     if (!products.length) {
       return res.status(404).json({
@@ -260,13 +260,13 @@ router.get("/count/:count", async (req, res, next) => {
     next(error);
   }
 });
+
 router.get("/products", async (req, res, next) => {
   try {
-    // Extract sort, order, and limit from query parameters, with default values
-    const { sort = "createdAt", order = "desc", limit = 10 } = req.query;
+    const { sort = "createdAt", order = "desc", limit = 5 } = req.query;
 
     // Validate and sanitize inputs
-    const validSortFields = ["createdAt", "updatedAt", "price", "name"]; // Example valid fields
+    const validSortFields = ["createdAt", "sold"];
     const validOrders = ["asc", "desc"];
 
     if (!validSortFields.includes(sort)) {
@@ -293,9 +293,9 @@ router.get("/products", async (req, res, next) => {
 
     // Fetch products with sorting and limiting
     const products = await Product.find({})
-      .populate("category")
-      .populate("subs")
-      .sort([[sort, order]])
+      .populate("Category")
+      .populate("SubCategory")
+      .sort([[sort, order]]) // Ensure sorting is applied here
       .limit(parsedLimit)
       .exec();
 
@@ -314,5 +314,4 @@ router.get("/products", async (req, res, next) => {
     next(error);
   }
 });
-
 export default router;
