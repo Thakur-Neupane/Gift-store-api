@@ -30,9 +30,10 @@ const productSchema = new mongoose.Schema(
         ref: "SubCategory",
       },
     ],
-    qty: {
+    quantity: Number,
+    sold: {
       type: Number,
-      required: true,
+      default: 0,
     },
     price: {
       type: Number,
@@ -52,7 +53,7 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     thumbnail: {
-      type: String, // URL of the thumbnail image
+      type: String,
     },
     images: [
       {

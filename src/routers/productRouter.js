@@ -17,7 +17,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Route to handle image uploads
 router.post("/uploadimages", async (req, res) => {
   try {
     const { images } = req.body;
@@ -254,6 +253,60 @@ router.get("/count/:count", async (req, res, next) => {
     }
 
     res.json({
+      status: "success",
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+router.get("/products", async (req, res, next) => {
+  try {
+    // Extract sort, order, and limit from query parameters, with default values
+    const { sort = "createdAt", order = "desc", limit = 10 } = req.query;
+
+    // Validate and sanitize inputs
+    const validSortFields = ["createdAt", "updatedAt", "price", "name"]; // Example valid fields
+    const validOrders = ["asc", "desc"];
+
+    if (!validSortFields.includes(sort)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid sort field",
+      });
+    }
+
+    if (!validOrders.includes(order)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid sort order",
+      });
+    }
+
+    const parsedLimit = parseInt(limit, 10);
+    if (isNaN(parsedLimit) || parsedLimit <= 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid limit value",
+      });
+    }
+
+    // Fetch products with sorting and limiting
+    const products = await Product.find({})
+      .populate("category")
+      .populate("subs")
+      .sort([[sort, order]])
+      .limit(parsedLimit)
+      .exec();
+
+    if (!products.length) {
+      return res.status(404).json({
+        status: "error",
+        message: "No products found",
+      });
+    }
+
+    res.status(200).json({
       status: "success",
       products,
     });
