@@ -12,7 +12,7 @@ export default [
   },
   {
     path: "/api/v1/categories",
-    middlewares: [auth, categoryRouter],
+    middlewares: [categoryRouter],
   },
   {
     path: "/api/v1/products",
@@ -20,7 +20,7 @@ export default [
   },
   {
     path: "/api/v1/sub-categories",
-    middlewares: [auth, subCategoryRouter],
+    middlewares: [subCategoryRouter],
   },
 
   {

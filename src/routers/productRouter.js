@@ -9,6 +9,7 @@ import {
 } from "../models/product/ProductModel.js";
 import cloudinary from "cloudinary";
 import Product from "../models/product/ProductSchema.js";
+import UserSchema from "../models/user/UserSchema.js";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -261,6 +262,7 @@ router.get("/count/:count", async (req, res, next) => {
   }
 });
 
+// Sorting of the users
 router.get("/products", async (req, res, next) => {
   try {
     const { sort = "createdAt", order = "desc", limit = 5 } = req.query;
@@ -314,4 +316,73 @@ router.get("/products", async (req, res, next) => {
     next(error);
   }
 });
+
+// Review of product
+router.put("/star/:id", async (req, res, next) => {
+  try {
+    const productId = req.params.id; // Get the product ID from the request parameters
+    const { star } = req.body; // Extract the rating from the request body
+
+    // Fetch the product and user
+    const product = await ProductSchema.findById(productId).exec();
+    const user = await UserSchema.findOne({ email: req.user.email }).exec();
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if the user has already rated the product
+    let existingRatingObject = product.ratings.find(
+      (ele) => ele.postedBy.toString() === user._id.toString()
+    );
+
+    if (existingRatingObject === undefined) {
+      // User has not rated the product, add a new rating
+      const ratingAdded = await ProductSchema.findByIdAndUpdate(
+        product._id,
+        {
+          $push: {
+            ratings: {
+              star,
+              postedBy: user._id,
+            },
+          },
+        },
+        { new: true } // Return the updated document
+      ).exec();
+
+      console.log("Rating added:", ratingAdded);
+      res.json(ratingAdded);
+    } else {
+      // User has already rated the product, update the existing rating
+      const ratingUpdated = await ProductSchema.updateOne(
+        {
+          _id: product._id,
+          "ratings.postedBy": user._id,
+        },
+        {
+          $set: {
+            "ratings.$.star": star,
+          },
+        },
+        { new: true } // Return the updated document
+      ).exec();
+
+      if (ratingUpdated.nModified === 0) {
+        return res.status(400).json({ error: "Failed to update rating" });
+      }
+
+      // Fetch and return the updated product with the new rating
+      const updatedProduct = await ProductSchema.findById(productId).exec();
+      res.json(updatedProduct);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
