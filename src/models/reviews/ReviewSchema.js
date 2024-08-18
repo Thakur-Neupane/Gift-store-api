@@ -2,44 +2,39 @@ import mongoose from "mongoose";
 
 const reviewSchema = new mongoose.Schema(
   {
-    status: {
-      type: String,
-      default: "inactive",
-    },
-    bookId: {
-      type: mongoose.Types.ObjectId,
-      required: true,
-    },
-    thumbnail: {
-      type: String,
-      default: "",
-    },
-    burrowId: {
-      type: mongoose.Types.ObjectId,
-      required: true,
-    },
     userId: {
       type: mongoose.Types.ObjectId,
       required: true,
     },
-    userName: {
+    // userName: {
+    //   type: String,
+    //   required: true,
+    // },
+    title: {
       type: String,
       required: true,
     },
-    tilte: {
-      type: String,
-      required: true,
-    },
-    ratings: {
+    rating: {
+      // Adjusted field name to match payload
       type: Number,
       min: 1,
       max: 5,
       required: true,
     },
-
-    message: {
+    description: {
+      // Adjusted field name to match payload
       type: String,
       required: true,
+    },
+    productId: {
+      // Added field to match payload
+      type: mongoose.Types.ObjectId,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
     },
   },
   {

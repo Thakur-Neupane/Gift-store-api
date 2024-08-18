@@ -11,10 +11,12 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    googleId: {
-      type: String,
-      default: null,
-    },
+    // gender: {
+    //   type: String,
+    //   enum: ["male", "female", "preferNotToSay"],
+    //   required: true,
+    //   default: "preferNotToSay",
+    // },
 
     fName: {
       type: String,
