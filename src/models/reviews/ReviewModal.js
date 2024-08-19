@@ -1,8 +1,15 @@
 import Review from "./ReviewSchema.js";
 
 // Insert a review
-export const insertReview = (obj) => {
-  return new Review(obj).save();
+export const insertReview = async (reviewData) => {
+  const { userName, ...restOfData } = reviewData;
+
+  const review = new Review({
+    ...restOfData,
+    userName: userName || "Anonymous",
+  });
+
+  return review.save();
 };
 
 // Get all reviews with an optional filter

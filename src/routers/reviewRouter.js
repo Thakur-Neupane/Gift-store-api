@@ -9,6 +9,8 @@ const router = express.Router();
 
 // Add a new review
 router.post("/", async (req, res, next) => {
+  console.log("Request body:", req.body); // Debugging line
+
   try {
     const review = await insertReview(req.body);
     res.json({
@@ -17,7 +19,11 @@ router.post("/", async (req, res, next) => {
       review,
     });
   } catch (error) {
-    next(error);
+    console.error("Error inserting review:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while adding the review",
+    });
   }
 });
 

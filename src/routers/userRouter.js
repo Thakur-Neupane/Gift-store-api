@@ -1,6 +1,11 @@
 import express from "express";
 import { comparePassword, hashPassword } from "../utils/bcrypt.js";
-import { getAUser, insertUser, updateUser } from "../models/user/UserModel.js";
+import {
+  getAllUsers,
+  getAUser,
+  insertUser,
+  updateUser,
+} from "../models/user/UserModel.js";
 import { newUserValidation } from "../middlewares/validation.js";
 import {
   deleteManySession,
@@ -203,6 +208,19 @@ router.get("/new-accessjwt", async (req, res, next) => {
     res.status(401).json({
       status: "error",
       message: "Unauthorized",
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// getting all users
+router.get("/all", auth, async (req, res, next) => {
+  try {
+    const users = await getAllUsers();
+    res.json({
+      status: "success",
+      users,
     });
   } catch (error) {
     next(error);

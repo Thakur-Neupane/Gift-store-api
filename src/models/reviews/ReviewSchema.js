@@ -6,28 +6,25 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
     },
-    // userName: {
-    //   type: String,
-    //   required: true,
-    // },
+    userName: {
+      type: String,
+      required: true,
+    },
     title: {
       type: String,
       required: true,
     },
     rating: {
-      // Adjusted field name to match payload
       type: Number,
       min: 1,
       max: 5,
       required: true,
     },
     description: {
-      // Adjusted field name to match payload
       type: String,
       required: true,
     },
     productId: {
-      // Added field to match payload
       type: mongoose.Types.ObjectId,
       required: true,
     },

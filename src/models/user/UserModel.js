@@ -8,8 +8,13 @@ export const getAUser = (filter) => {
   return UserSchema.findOne(filter);
 };
 
-export const getAllUsers = () => {
-  return UserSchema.find();
+export const getAllUsers = async () => {
+  try {
+    return await UserSchema.find();
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    throw new Error("Error fetching users from the database.");
+  }
 };
 
 export const updateUserById = ({ _id, obj }) => {
