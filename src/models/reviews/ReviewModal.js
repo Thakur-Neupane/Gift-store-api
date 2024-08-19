@@ -1,5 +1,15 @@
 import Review from "./ReviewSchema.js";
 
+// Get all reviews with an optional filter
+export const getAllReviews = (filter = {}) => {
+  return Review.find(filter);
+};
+
+// Get review by user and product
+export const getReviewByUserAndProduct = (userId, productId) => {
+  return Review.findOne({ userId, productId });
+};
+
 // Insert a review
 export const insertReview = async (reviewData) => {
   const { userName, ...restOfData } = reviewData;
@@ -10,11 +20,6 @@ export const insertReview = async (reviewData) => {
   });
 
   return review.save();
-};
-
-// Get all reviews with an optional filter
-export const getAllReviews = (filter = {}) => {
-  return Review.find(filter);
 };
 
 // Update review by ID

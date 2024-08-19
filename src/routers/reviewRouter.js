@@ -4,24 +4,44 @@ import {
   insertReview,
   updateAReviewById,
   deleteAReviewById,
+  getReviewByUserAndProduct,
 } from "../models/reviews/ReviewModal.js";
 
 const router = express.Router();
 
-// Add a new review
+// Add or update a review
 router.post("/", async (req, res, next) => {
   try {
-    const review = await insertReview(req.body);
-    res.json({
-      status: "success",
-      message: "Your new review has been added successfully",
-      review,
-    });
+    const { userId, productId } = req.body;
+
+    // Check if the review already exists
+    const existingReview = await getReviewByUserAndProduct(userId, productId);
+
+    if (existingReview) {
+      // Update the existing review
+      const updatedReview = await updateAReviewById(
+        existingReview._id,
+        req.body
+      );
+      res.json({
+        status: "success",
+        message: "Your review has been updated successfully",
+        review: updatedReview,
+      });
+    } else {
+      // Insert a new review
+      const newReview = await insertReview(req.body);
+      res.json({
+        status: "success",
+        message: "Your new review has been added successfully",
+        review: newReview,
+      });
+    }
   } catch (error) {
-    console.error("Error inserting review:", error);
+    console.error("Error adding/updating review:", error);
     res.status(500).json({
       status: "error",
-      message: "An error occurred while adding the review",
+      message: "An error occurred while adding/updating the review",
     });
   }
 });
@@ -36,6 +56,12 @@ router.patch("/", async (req, res, next) => {
       rating,
       description,
     });
+    if (!review) {
+      return res.status(404).json({
+        status: "error",
+        message: "Review not found",
+      });
+    }
     res.json({
       status: "success",
       message: "The review has been updated successfully",
