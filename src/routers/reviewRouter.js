@@ -3,14 +3,13 @@ import {
   getAllReviews,
   insertReview,
   updateAReviewById,
+  deleteAReviewById,
 } from "../models/reviews/ReviewModal.js";
 
 const router = express.Router();
 
 // Add a new review
 router.post("/", async (req, res, next) => {
-  console.log("Request body:", req.body); // Debugging line
-
   try {
     const review = await insertReview(req.body);
     res.json({
@@ -30,17 +29,31 @@ router.post("/", async (req, res, next) => {
 // Update review
 router.patch("/", async (req, res, next) => {
   try {
-    const { _id, status, title, ratings, message } = req.body;
+    const { _id, status, title, rating, description } = req.body;
     const review = await updateAReviewById(_id, {
       status,
       title,
-      ratings,
-      message,
+      rating,
+      description,
     });
     res.json({
       status: "success",
       message: "The review has been updated successfully",
       review,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete review
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await deleteAReviewById(id);
+    res.json({
+      status: "success",
+      message: "Review deleted successfully",
     });
   } catch (error) {
     next(error);

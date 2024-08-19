@@ -28,6 +28,10 @@ const reviewSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
     },
+    productName: {
+      type: String,
+      required: true,
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],
