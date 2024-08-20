@@ -385,4 +385,29 @@ router.put("/star/:id", async (req, res, next) => {
   }
 });
 
+// Get related products based on category
+router.get("/related/:id", async (req, res) => {
+  try {
+    // Fetch the current product by ID
+    const product = await Product.findById(req.params.id).exec();
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Fetch related products from the same category, excluding the current product
+    const relatedProducts = await Product.find({
+      _id: { $ne: product._id },
+      category: product.category,
+    })
+      .limit(6)
+      .exec();
+
+    res.json(relatedProducts);
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;
