@@ -62,21 +62,26 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// get one category
+// Get one category by slug
 router.get("/:slug", async (req, res, next) => {
   try {
     const { slug } = req.params;
     const category = await getACategory(slug);
+
+    if (!category) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Category not found" });
+    }
+
     res.json({
       status: "success",
-      message: "New category has been added",
       category,
     });
   } catch (error) {
     next(error);
   }
 });
-
 // delete category
 router.delete("/:slug", async (req, res, next) => {
   try {

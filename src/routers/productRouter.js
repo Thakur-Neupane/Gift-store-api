@@ -409,4 +409,59 @@ router.get("/related/:id", async (req, res) => {
   }
 });
 
+// Get products by category ID
+router.get("/category/:categoryId", async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const products = await Product.find({ category: categoryId });
+
+    res.json({
+      status: "success",
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Route to get products by subcategory ID
+router.get("/subcategory/:subCategoryId", async (req, res, next) => {
+  try {
+    const { subCategoryId } = req.params;
+
+    const products = await Product.find({ subCategories: subCategoryId });
+
+    if (!products.length) {
+      return res.status(404).json({
+        status: "error",
+        message: "No products found for this subcategory",
+      });
+    }
+
+    res.json({
+      status: "success",
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+const handleQuery = async (req, res, query) => {
+  const products = await Product.find({ $text: { $search: query } })
+    .populate("Category")
+    .populate("SubCategory")
+    .exec();
+  res.json(products);
+};
+
+router.post("/search/filters", async (req, res, next) => {
+  const { query } = req.body;
+
+  if (query) {
+    console.log("query", query);
+    await handleQuery(req, res, query);
+  }
+});
+
 export default router;

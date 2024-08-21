@@ -12,8 +12,8 @@ export const sortCategories = () => {
   return CategorySchema.find().sort({ createdAt: -1 }).exec();
 };
 
-export const getACategory = (slug) => {
-  return CategorySchema.findOne({ slug });
+export const getACategory = async (slug) => {
+  return await Category.findOne({ slug }).exec();
 };
 
 export const deleteCategory = (slug) => {
