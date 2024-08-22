@@ -86,5 +86,6 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
+// Add a text index on `name` and `description` fields
+productSchema.index({ name: "text", description: "text" });
 export default mongoose.model("Product", productSchema);
