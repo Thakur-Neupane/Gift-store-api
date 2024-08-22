@@ -1,13 +1,15 @@
 import express from "express";
+const router = express.Router();
 import slugify from "slugify";
-import cloudinary from "cloudinary";
-import Product from "../models/product/ProductSchema.js";
-import UserSchema from "../models/user/UserSchema.js";
+import ProductSchema from "../models/product/ProductSchema.js";
 import {
   getAllProducts,
   deleteProduct,
   updateProduct,
 } from "../models/product/ProductModel.js";
+import cloudinary from "cloudinary";
+import Product from "../models/product/ProductSchema.js";
+import UserSchema from "../models/user/UserSchema.js";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -16,9 +18,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const router = express.Router();
-
-// Route to handle image uploads
 router.post("/uploadimages", async (req, res) => {
   try {
     const { images } = req.body;
@@ -36,6 +35,7 @@ router.post("/uploadimages", async (req, res) => {
     );
 
     const results = await Promise.all(uploadPromises);
+
     const uploadedImages = results.map((result) => ({
       url: result.secure_url,
       public_id: result.public_id,
@@ -92,14 +92,16 @@ router.post("/", async (req, res, next) => {
     } = req.body;
 
     if (!name || !sku || !category || !qty || !price) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Required fields are missing" });
+      return res.status(400).json({
+        status: "error",
+        message: "Required fields are missing",
+      });
     }
 
     const generatedSlug = slugify(name, { lower: true });
     const productSlug = req.body.slug || generatedSlug;
 
+    // Create the product
     const prod = await Product.create({
       name,
       sku,
@@ -127,20 +129,17 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    res
-      .status(400)
-      .json({
-        status: "error",
-        message: "Unable to add product, try again later",
-      });
+    res.json({
+      status: "error",
+      message: "Unable to add product, try again later",
+    });
   } catch (error) {
     if (error.message.includes("E11000 duplicate")) {
       error.message =
         "This product slug or SKU already exists. Please change the name of the product or SKU and try again.";
-      res.status(400).json({ status: "error", message: error.message });
-    } else {
-      next(error);
+      error.statusCode = 400;
     }
+    next(error);
   }
 });
 
@@ -148,7 +147,11 @@ router.post("/", async (req, res, next) => {
 router.get("/", async (req, res, next) => {
   try {
     const products = await getAllProducts();
-    res.json({ status: "success", products });
+    res.json({
+      status: "success",
+      message: "",
+      products,
+    });
   } catch (error) {
     next(error);
   }
@@ -158,22 +161,29 @@ router.get("/", async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-
+    console.log("Received ID in route:", id);
     if (!id) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "ID parameter is missing" });
+      return res.status(400).json({
+        status: "error",
+        message: "ID parameter is missing",
+      });
     }
 
-    const product = await Product.findById(id);
+    const product = await ProductSchema.findById(id);
+    console.log("Product fetched from DB:", product);
 
     if (!product) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Product not found" });
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
     }
 
-    res.json({ status: "success", product });
+    res.json({
+      status: "success",
+      message: "",
+      product,
+    });
   } catch (error) {
     console.error("Error in route handler:", error);
     next(error);
@@ -187,11 +197,11 @@ router.put("/update/:id", async (req, res, next) => {
     const updateData = req.body;
 
     const updatedProduct = await updateProduct(id, updateData);
-
     if (!updatedProduct) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Product not found" });
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
     }
 
     res.json({
@@ -211,20 +221,22 @@ router.delete("/:id", async (req, res, next) => {
     const deletedProduct = await deleteProduct(id);
 
     if (!deletedProduct) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Product not found" });
+      return res.status(404).json({
+        status: "error",
+        message: "Product not found",
+      });
     }
 
-    res.json({ status: "success", message: "Product deleted successfully" });
+    res.json({
+      status: "success",
+      message: "Product deleted successfully",
+    });
   } catch (error) {
     console.error("Error in delete route:", error.message);
-    res
-      .status(500)
-      .json({
-        status: "error",
-        message: "Error deleting product: " + error.message,
-      });
+    res.status(500).json({
+      status: "error",
+      message: "Error deleting product: " + error.message,
+    });
   }
 });
 
@@ -235,18 +247,22 @@ router.get("/count/:count", async (req, res, next) => {
     const products = await Product.find().limit(parseInt(count));
 
     if (!products.length) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "No products found" });
+      return res.status(404).json({
+        status: "error",
+        message: "No products found",
+      });
     }
 
-    res.json({ status: "success", products });
+    res.json({
+      status: "success",
+      products,
+    });
   } catch (error) {
     next(error);
   }
 });
 
-// Sorting of the products
+// Sorting of the users
 router.get("/products", async (req, res, next) => {
   try {
     const { sort = "createdAt", order = "desc", limit = 5 } = req.query;
@@ -256,39 +272,46 @@ router.get("/products", async (req, res, next) => {
     const validOrders = ["asc", "desc"];
 
     if (!validSortFields.includes(sort)) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Invalid sort field" });
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid sort field",
+      });
     }
 
     if (!validOrders.includes(order)) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Invalid sort order" });
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid sort order",
+      });
     }
 
     const parsedLimit = parseInt(limit, 10);
     if (isNaN(parsedLimit) || parsedLimit <= 0) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Invalid limit value" });
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid limit value",
+      });
     }
 
     // Fetch products with sorting and limiting
     const products = await Product.find({})
       .populate("Category")
       .populate("SubCategory")
-      .sort([[sort, order]])
+      .sort([[sort, order]]) // Ensure sorting is applied here
       .limit(parsedLimit)
       .exec();
 
     if (!products.length) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "No products found" });
+      return res.status(404).json({
+        status: "error",
+        message: "No products found",
+      });
     }
 
-    res.json({ status: "success", products });
+    res.status(200).json({
+      status: "success",
+      products,
+    });
   } catch (error) {
     next(error);
   }
@@ -297,10 +320,11 @@ router.get("/products", async (req, res, next) => {
 // Review of product
 router.put("/star/:id", async (req, res, next) => {
   try {
-    const productId = req.params.id;
-    const { star } = req.body;
+    const productId = req.params.id; // Get the product ID from the request parameters
+    const { star } = req.body; // Extract the rating from the request body
 
-    const product = await Product.findById(productId).exec();
+    // Fetch the product and user
+    const product = await ProductSchema.findById(productId).exec();
     const user = await UserSchema.findOne({ email: req.user.email }).exec();
 
     if (!product) {
@@ -311,35 +335,57 @@ router.put("/star/:id", async (req, res, next) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    let existingRating = product.ratings.find(
-      (r) => r.postedBy.toString() === user._id.toString()
+    // Check if the user has already rated the product
+    let existingRatingObject = product.ratings.find(
+      (ele) => ele.postedBy.toString() === user._id.toString()
     );
 
-    if (existingRating) {
-      const ratingUpdated = await Product.updateOne(
-        { _id: product._id, "ratings.postedBy": user._id },
-        { $set: { "ratings.$.star": star } },
-        { new: true }
+    if (existingRatingObject === undefined) {
+      // User has not rated the product, add a new rating
+      const ratingAdded = await ProductSchema.findByIdAndUpdate(
+        product._id,
+        {
+          $push: {
+            ratings: {
+              star,
+              postedBy: user._id,
+            },
+          },
+        },
+        { new: true } // Return the updated document
+      ).exec();
+
+      console.log("Rating added:", ratingAdded);
+      res.json(ratingAdded);
+    } else {
+      // User has already rated the product, update the existing rating
+      const ratingUpdated = await ProductSchema.updateOne(
+        {
+          _id: product._id,
+          "ratings.postedBy": user._id,
+        },
+        {
+          $set: {
+            "ratings.$.star": star,
+          },
+        },
+        { new: true } // Return the updated document
       ).exec();
 
       if (ratingUpdated.nModified === 0) {
         return res.status(400).json({ error: "Failed to update rating" });
       }
-    } else {
-      await Product.updateOne(
-        { _id: product._id },
-        { $push: { ratings: { star, postedBy: user._id } } },
-        { new: true }
-      ).exec();
-    }
 
-    const updatedProduct = await Product.findById(productId).exec();
-    res.json(updatedProduct);
+      // Fetch and return the updated product with the new rating
+      const updatedProduct = await ProductSchema.findById(productId).exec();
+      res.json(updatedProduct);
+    }
   } catch (err) {
     next(err);
   }
 });
 
+// Get related products based on category
 // Get related products based on category
 router.get("/related/:id", async (req, res) => {
   try {
@@ -369,7 +415,10 @@ router.get("/category/:categoryId", async (req, res, next) => {
     const { categoryId } = req.params;
     const products = await Product.find({ category: categoryId });
 
-    res.json({ status: "success", products });
+    res.json({
+      status: "success",
+      products,
+    });
   } catch (error) {
     next(error);
   }
@@ -379,39 +428,39 @@ router.get("/category/:categoryId", async (req, res, next) => {
 router.get("/subcategory/:subCategoryId", async (req, res, next) => {
   try {
     const { subCategoryId } = req.params;
+
     const products = await Product.find({ subCategories: subCategoryId });
 
     if (!products.length) {
-      return res
-        .status(404)
-        .json({
-          status: "error",
-          message: "No products found for this subcategory",
-        });
+      return res.status(404).json({
+        status: "error",
+        message: "No products found for this subcategory",
+      });
     }
 
-    res.json({ status: "success", products });
+    res.json({
+      status: "success",
+      products,
+    });
   } catch (error) {
     next(error);
   }
 });
 
-// Search products by query
-router.post("/search/filters", async (req, res, next) => {
-  try {
-    const { query } = req.body;
+const handleQuery = async (req, res, query) => {
+  const products = await Product.find({ $text: { $search: query } })
+    .populate("Category")
+    .populate("SubCategory")
+    .exec();
+  res.json(products);
+};
 
-    if (query) {
-      const products = await Product.find({ $text: { $search: query } })
-        .populate("Category")
-        .populate("SubCategory")
-        .exec();
-      res.json({ status: "success", products });
-    } else {
-      res.status(400).json({ status: "error", message: "Query is required" });
-    }
-  } catch (error) {
-    next(error);
+router.post("/search/filters", async (req, res, next) => {
+  const { query } = req.body;
+
+  if (query) {
+    console.log("query", query);
+    await handleQuery(req, res, query);
   }
 });
 
