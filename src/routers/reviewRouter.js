@@ -5,6 +5,7 @@ import {
   updateAReviewById,
   deleteAReviewById,
   getReviewByUserAndProduct,
+  getReviewsByProductId,
 } from "../models/reviews/ReviewModal.js";
 
 const router = express.Router();
@@ -103,6 +104,20 @@ router.get("/all", async (req, res, next) => {
 router.get("/", async (req, res, next) => {
   try {
     const reviews = await getAllReviews({ status: "active" });
+    res.json({
+      status: "success",
+      reviews,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get reviews by product ID
+router.get("/product/:productId", async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const reviews = await getReviewsByProductId(productId);
     res.json({
       status: "success",
       reviews,

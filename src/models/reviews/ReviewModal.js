@@ -31,3 +31,8 @@ export const updateAReviewById = (_id, obj) => {
 export const deleteAReviewById = (_id) => {
   return Review.findByIdAndDelete(_id);
 };
+
+// Function to get reviews by product ID
+export const getReviewsByProductId = async (productId) => {
+  return await Review.find({ productId: productId, status: "active" });
+};
