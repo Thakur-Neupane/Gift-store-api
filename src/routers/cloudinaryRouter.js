@@ -4,7 +4,7 @@ import cloudinary from "cloudinary";
 const router = express.Router();
 
 // Configure Cloudinary
-cloudinary.config({
+cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
@@ -15,8 +15,10 @@ router.post("/uploadimages", async (req, res) => {
   try {
     const { images } = req.body;
 
-    if (!images || !Array.isArray(images)) {
-      return res.status(400).json({ message: "No images data provided" });
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "No images data provided or empty array" });
     }
 
     const uploadPromises = images.map((image) =>
@@ -37,7 +39,9 @@ router.post("/uploadimages", async (req, res) => {
     res.json(uploadedImages);
   } catch (error) {
     console.error("Image upload error:", error);
-    res.status(500).json({ message: "Image upload failed", error });
+    res
+      .status(500)
+      .json({ message: "Image upload failed", error: error.message });
   }
 });
 
@@ -55,11 +59,13 @@ router.post("/removeimages", async (req, res) => {
     if (result.result === "ok") {
       res.json({ message: "Image removed successfully" });
     } else {
-      res.status(500).json({ message: "Image removal failed" });
+      res.status(500).json({ message: "Image removal failed", result });
     }
   } catch (error) {
-    console.error("Image remove error:", error);
-    res.status(500).json({ message: "Image removal failed", error });
+    console.error("Image removal error:", error);
+    res
+      .status(500)
+      .json({ message: "Image removal failed", error: error.message });
   }
 });
 
