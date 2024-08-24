@@ -39,11 +39,7 @@ router.post("/", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error("Error adding/updating review:", error);
-    res.status(500).json({
-      status: "error",
-      message: "An error occurred while adding/updating the review",
-    });
+    next(error);
   }
 });
 
