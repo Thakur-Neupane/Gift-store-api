@@ -29,6 +29,7 @@ import {
 } from "../utils/jwt.js";
 import { auth } from "../middlewares/auth.js";
 import { otpGenerator } from "../utils/randmo.js";
+import UserSchema from "../models/user/UserSchema.js";
 
 router.get("/", auth, (req, res, next) => {
   try {
@@ -364,6 +365,30 @@ router.get("/:id", auth, async (req, res, next) => {
         message: "User not found",
       });
     }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete a user by ID
+router.delete("/:id", auth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await getOneUser(id);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    await UserSchema.findByIdAndDelete(id);
+
+    res.json({
+      status: "success",
+      message: "User successfully deleted",
+    });
   } catch (error) {
     next(error);
   }
