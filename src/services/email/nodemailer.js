@@ -1,17 +1,12 @@
-//Email workflow;
-// have nodemailer installed
-// create Transporter
-// Form the body message
-//sendMail
-
 import nodemailer from "nodemailer";
 
+// Create a transport object using your SMTP server details
 const emailProcessor = async (mailBodyObj) => {
   try {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_SEVER,
       port: 587,
-      secure: false, // Use `true` for port 465, `false` for all other ports
+      secure: false, // true for port 465, false for all other ports
       auth: {
         user: process.env.SMTP_EMAIL,
         pass: process.env.SMTP_PASSWORD,
@@ -22,116 +17,62 @@ const emailProcessor = async (mailBodyObj) => {
     console.log("Message sent: %s", info.messageId);
     console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
   } catch (error) {
-    console.log(error);
+    console.error("Error sending email:", error);
   }
 };
 
-// async..await is not allowed in global scope, must use a wrapper
-export const emailVerificationMail = ({ email, fName, url }) => {
+// Function to send email verification link
+export const emailVerificationMail = ({ email, fName, token }) => {
+  const url = `${process.env.FE_ROOT_URL}/verify-email?c=${token}&e=${email}`;
   const obj = {
-    from: `"Tech Store 👻" <${process.env.SMTP_EMAIL}>`, // sender address
-    to: email, // list of receivers
-    subject: "Action Required", // Subject line
-    text: `hellow there, pelase follow the link to verify you account ${url}`, // plain text body
+    from: `"Tech Store" <${process.env.SMTP_EMAIL}>`,
+    to: email,
+    subject: "Email Verification",
+    text: `Hello ${fName}, please follow the link to verify your account: ${url}`,
     html: `
-    Hello ${fName},
-<br />
-<br />
-
-<p>
-    Click the button bellow to verify your email
-   </p> 
-
-   <br />
-   <a href="${url}" style="padding: 2rem; background: green"> Verify Now
-   </a>
-
-
-<p>
-If the button desn't work above, Pelase copy the following url and paste in your browser
-${url}
-</p>
-<br />
-<br />
-<p>
-Regards, <br />
-Tech Store
-</p>
-
-
-    `, // html body
+      <p>Hello ${fName},</p>
+      <p>Please click the button below to verify your email address:</p>
+      <a href="${url}" style="padding: 10px 20px; background-color: green; color: white; text-decoration: none; border-radius: 5px;">Verify Now</a>
+      <p>If the button doesn't work, copy and paste the following URL into your browser:</p>
+      <p>${url}</p>
+      <p>Regards,<br>Tech Store</p>
+    `,
   };
 
   emailProcessor(obj);
 };
 
-// send OTP for password
+// Function to send OTP for password reset
 export const sendOTPMail = ({ email, fName, token }) => {
   const obj = {
-    from: `"Tech Store" <${process.env.SMTP_EMAIL}>`, // sender address
-    to: email, // list of receivers
-    subject: "OTP for reset password", // Subject line
-    text: `hellow there, Here is your OTP =  ${token}`, // plain text body
+    from: `"Tech Store" <${process.env.SMTP_EMAIL}>`,
+    to: email,
+    subject: "OTP for Password Reset",
+    text: `Hello ${fName}, Here is your OTP: ${token}`,
     html: `
-    Hello ${fName},
-<br />
-<br />
-
-<p>
-   Here is your OTP
-   </p> 
-
-   <br />
-   <div  style="font-size: 2rem; font-weight: bolder;"> ${token}
-   </div>
-
-
-<p>
-If you didn't request your otp to reset your password, Please don't share this code with anybody.
-</p>
-<br />
-<br />
-<p>
-Regards, <br />
-Tech Store
-</p>
-
-
-    `, // html body
+      <p>Hello ${fName},</p>
+      <p>Here is your OTP for resetting your password:</p>
+      <div style="font-size: 2rem; font-weight: bold;">${token}</div>
+      <p>If you did not request a password reset, please disregard this email.</p>
+      <p>Regards,<br>Tech Store</p>
+    `,
   };
 
   emailProcessor(obj);
 };
 
-// Account update changed email notification
+// Function to send account update notification
 export const accountUpdatedNotification = ({ email, fName }) => {
   const obj = {
-    from: `"Tech Store" <${process.env.SMTP_EMAIL}>`, // sender address
-    to: email, // list of receivers
-    subject: "Your account has been updated", // Subject line
-    text: `hellow there, somebody just updated your account, if that's not you, pelase change your password and contact us asap`, // plain text body
+    from: `"Tech Store" <${process.env.SMTP_EMAIL}>`,
+    to: email,
+    subject: "Account Updated",
+    text: `Hello ${fName}, your account has been updated. If this wasn't you, please change your password and contact us immediately.`,
     html: `
-    Hello ${fName},
-<br />
-<br />
-
-<p>
-somebody just updated your account, if that's not you, please change your password and contact us asap
-   </p> 
-
-   <br />
-  
-
- 
-<br />
-<br />
-<p>
-Regards, <br />
-Tech Store
-</p>
-
-
-    `, // html body
+      <p>Hello ${fName},</p>
+      <p>Someone just updated your account. If this wasn't you, please change your password and contact us immediately.</p>
+      <p>Regards,<br>Tech Store</p>
+    `,
   };
 
   emailProcessor(obj);
