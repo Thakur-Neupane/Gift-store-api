@@ -24,3 +24,7 @@ export const updateUserById = ({ _id, obj }) => {
 export const updateUser = (filter, obj) => {
   return UserSchema.findOneAndUpdate(filter, obj);
 };
+
+export const getOneUser = (id) => {
+  return UserSchema.findById(id);
+};

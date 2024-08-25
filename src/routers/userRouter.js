@@ -3,6 +3,7 @@ import { comparePassword, hashPassword } from "../utils/bcrypt.js";
 import {
   getAllUsers,
   getAUser,
+  getOneUser,
   insertUser,
   updateUser,
 } from "../models/user/UserModel.js";
@@ -340,6 +341,29 @@ router.patch("/password/reset", async (req, res, next) => {
       status: "error",
       message: "Invalid otp or data reqeust, try agian later",
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get a single user by id
+router.get("/:id", auth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await getOneUser(id);
+
+    if (user) {
+      res.json({
+        status: "success",
+        user,
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
   } catch (error) {
     next(error);
   }
