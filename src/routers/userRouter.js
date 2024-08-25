@@ -6,6 +6,7 @@ import {
   getOneUser,
   insertUser,
   updateUser,
+  updateUserById,
 } from "../models/user/UserModel.js";
 import { newUserValidation } from "../middlewares/validation.js";
 import {
@@ -389,6 +390,113 @@ router.delete("/:id", auth, async (req, res, next) => {
       status: "success",
       message: "User successfully deleted",
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Middleware to validate roles
+const validRoles = ["admin", "user"];
+
+const validateRole = (role) => {
+  return validRoles.includes(role);
+};
+
+// Route to update user role
+router.patch("/:id/role", auth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({
+        status: "error",
+        message: "Role must be provided",
+      });
+    }
+
+    if (!validateRole(role)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid role value",
+      });
+    }
+
+    // Check if user exists
+    const user = await getOneUser(id);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Update user role
+    const updatedUser = await updateUserById(id, { role });
+
+    if (updatedUser) {
+      res.json({
+        status: "success",
+        message: "User role updated successfully",
+        user: updatedUser,
+      });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: "Failed to update user role",
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update user status
+router.patch("/:id/status", auth, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // Expecting the new status in the request body
+
+    if (!status) {
+      return res.status(400).json({
+        status: "error",
+        message: "Status must be provided",
+      });
+    }
+
+    // Validate status value
+    const validStatuses = ["active", "inactive"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid status value",
+      });
+    }
+
+    // Check if user exists
+    const user = await getOneUser(id);
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Update user status
+    const updatedUser = await updateUserById(id, { status });
+
+    if (updatedUser) {
+      res.json({
+        status: "success",
+        message: "User status updated successfully",
+        user: updatedUser,
+      });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: "Failed to update user status",
+      });
+    }
   } catch (error) {
     next(error);
   }
