@@ -79,8 +79,13 @@ const productSchema = new mongoose.Schema(
 
     ratings: [
       {
-        star: Number,
+        star: {
+          type: Number,
+          min: 1,
+          max: 5,
+        },
         postedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        review: String,
       },
     ],
   },

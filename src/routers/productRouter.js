@@ -467,9 +467,18 @@ router.post("/search/filters", async (req, res, next) => {
 // Route to get highest-rated products
 router.get("/highest-rated", async (req, res, next) => {
   try {
-    const products = await ProductSchema.find({})
-      .sort({ "ratings.star": -1 }) //-1 to sort the Productratings by descending order
-      .exec();
+    const products = await ProductSchema.aggregate([
+      {
+        $addFields: {
+          averageRating: {
+            $avg: "$ratings.star",
+          },
+        },
+      },
+      {
+        $sort: { averageRating: -1 },
+      },
+    ]).exec();
 
     if (!products.length) {
       return res.status(404).json({
