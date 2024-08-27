@@ -447,23 +447,6 @@ router.get("/subcategory/:subCategoryId", async (req, res, next) => {
   }
 });
 
-const handleQuery = async (req, res, query) => {
-  const products = await Product.find({ $text: { $search: query } })
-    .populate("Category")
-    .populate("SubCategory")
-    .exec();
-  res.json(products);
-};
-
-router.post("/search/filters", async (req, res, next) => {
-  const { query } = req.body;
-
-  if (query) {
-    console.log("query", query);
-    await handleQuery(req, res, query);
-  }
-});
-
 // Route to get highest-rated products
 router.get("/highest-rated", async (req, res, next) => {
   try {
@@ -493,6 +476,145 @@ router.get("/highest-rated", async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+});
+
+// Helper functions for filters
+const handleQuery = async (query) => {
+  return Product.find({ $text: { $search: query } })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+const handlePrice = async (price) => {
+  return Product.find({
+    price: { $gte: price[0], $lte: price[1] },
+  })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+const handleCategory = async (category) => {
+  return Product.find({ category })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+const handleStar = async (stars) => {
+  return Product.aggregate([
+    {
+      $project: {
+        document: "$$ROOT",
+        floorAverage: { $floor: { $avg: "$ratings.star" } },
+      },
+    },
+    { $match: { floorAverage: stars } },
+  ])
+    .limit(12)
+    .exec();
+};
+
+const handleSub = async (sub) => {
+  return Product.find({ subCategories: sub })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+const handleShipping = async (shipping) => {
+  return Product.find({ shipping })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+const handleColor = async (color) => {
+  return Product.find({ color })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+const handleBrand = async (brand) => {
+  return Product.find({ brand })
+    .populate("category", "_id name")
+    .populate("subCategories", "_id name")
+    .populate("postedBy", "_id name")
+    .exec();
+};
+
+// Route to handle search and filters
+router.post("/search/filters", async (req, res) => {
+  try {
+    const { query, price, category, stars, sub, shipping, color, brand } =
+      req.body;
+
+    let products = Product.find();
+
+    if (query) {
+      products = products.find({ $text: { $search: query } });
+    }
+
+    if (price) {
+      products = products.find({ price: { $gte: price[0], $lte: price[1] } });
+    }
+
+    if (category) {
+      products = products.find({ category });
+    }
+
+    if (stars) {
+      const aggregates = await Product.aggregate([
+        {
+          $project: {
+            document: "$$ROOT",
+            floorAverage: { $floor: { $avg: "$ratings.star" } },
+          },
+        },
+        { $match: { floorAverage: stars } },
+      ])
+        .limit(12)
+        .exec();
+
+      products = products.find({ _id: { $in: aggregates.map((p) => p._id) } });
+    }
+
+    if (sub) {
+      products = products.find({ subCategories: sub });
+    }
+
+    if (shipping) {
+      products = products.find({ shipping });
+    }
+
+    if (color) {
+      products = products.find({ color });
+    }
+
+    if (brand) {
+      products = products.find({ brand });
+    }
+
+    products = products
+      .populate("category", "_id name")
+      .populate("subCategories", "_id name")
+      .populate("postedBy", "_id name")
+      .exec();
+
+    const results = await products;
+    res.json({ status: "success", products: results });
+  } catch (error) {
+    console.error("Search/filter error:", error);
+    res.status(500).json({ status: "error", message: "Server error", error });
   }
 });
 
