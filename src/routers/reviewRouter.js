@@ -113,7 +113,9 @@ router.get("/", async (req, res, next) => {
 router.get("/product/:productId", async (req, res, next) => {
   try {
     const { productId } = req.params;
+    // Fetch reviews and sort by rating in descending order
     const reviews = await getReviewsByProductId(productId);
+    reviews.sort((a, b) => b.rating - a.rating);
     res.json({
       status: "success",
       reviews,
