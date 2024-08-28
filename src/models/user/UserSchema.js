@@ -11,17 +11,16 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-    // gender: {
-    //   type: String,
-    //   enum: ["male", "female", "preferNotToSay"],
-    //   required: true,
-    //   default: "preferNotToSay",
-    // },
+    gender: {
+      type: String,
+      enum: ["male", "female", "preferNotToSay"],
+      default: "preferNotToSay",
+    },
 
     fName: {
       type: String,
       required: true,
-      //    maxLength: [100, "stop spamming me"]
+      maxLength: [100, "stop spamming me"],
     },
     lName: {
       type: String,
