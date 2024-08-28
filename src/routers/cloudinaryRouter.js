@@ -21,9 +21,9 @@ router.post("/uploadimages", async (req, res) => {
 
     const uploadPromises = images.map((image) =>
       cloudinary.v2.uploader.upload(image, {
-        folder: "product_images", // Specify the folder in Cloudinary
+        folder: "product_images",
         resource_type: "image",
-        allowed_formats: ["jpg", "jpeg", "png"], // Specify allowed formats
+        allowed_formats: ["jpg", "jpeg", "png"],
       })
     );
 
