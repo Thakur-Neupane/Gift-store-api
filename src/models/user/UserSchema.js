@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema(
       enum: ["male", "female", "preferNotToSay"],
       default: "preferNotToSay",
     },
-
     fName: {
       type: String,
       required: true,

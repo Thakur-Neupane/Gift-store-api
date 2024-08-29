@@ -54,15 +54,24 @@ router.get("/", auth, (req, res, next) => {
   }
 });
 
-router.post("/", newUserValidation, async (req, res, next) => {
+router.post("/", async (req, res, next) => {
   try {
-    // encrypt password
+    // Encrypt password
     req.body.password = hashPassword(req.body.password);
+
+    // Validate gender
+    const validGenders = ["male", "female", "preferNotToSay"];
+    if (!validGenders.includes(req.body.gender)) {
+      console.error(`Invalid gender value: ${req.body.gender}`);
+      return res
+        .status(400)
+        .json({ status: "error", message: "Invalid gender value" });
+    }
 
     const user = await insertUser(req.body);
 
     if (user?._id) {
-      // create unique url and add in the database
+      // Create unique URL and add in the database
       const token = uuidv4();
       const obj = {
         token,
@@ -71,8 +80,7 @@ router.post("/", newUserValidation, async (req, res, next) => {
 
       const result = await insertSession(obj);
       if (result?._id) {
-        //process for sending email
-
+        // Send verification email
         emailVerificationMail({
           email: user.email,
           fName: user.fName,
@@ -82,16 +90,17 @@ router.post("/", newUserValidation, async (req, res, next) => {
         return res.json({
           status: "success",
           message:
-            "We have send you an email with insturction to verify your  account. Pelase chekc email/junk to verify your account",
+            "We have sent you an email with instructions to verify your account. Please check your email/junk folder.",
         });
       }
     }
 
     res.json({
       status: "error",
-      message: "Error Unable to create an account, Contact administration",
+      message: "Unable to create an account. Contact administration.",
     });
   } catch (error) {
+    console.error("Error creating user:", error);
     next(error);
   }
 });
