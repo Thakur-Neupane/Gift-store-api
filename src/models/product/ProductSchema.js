@@ -71,7 +71,13 @@ const productSchema = new mongoose.Schema(
       type: String,
     },
     color: {
-      type: String,
+      type: [String], // Array of strings to represent colors
+      validate: {
+        validator: (v) => !v || (Array.isArray(v) && v.length > 0),
+        message:
+          "If provided, colors must be an array with at least one color.",
+      },
+      // No 'required' property here, making 'colors' optional
     },
     brand: {
       type: String,
@@ -91,6 +97,8 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 // Add a text index on `name` and `description` fields
 productSchema.index({ name: "text", description: "text" });
+
 export default mongoose.model("Product", productSchema);
