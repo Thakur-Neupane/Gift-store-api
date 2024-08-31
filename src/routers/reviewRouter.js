@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 // Add or update a review
-router.post("/", async (req, res, next) => {
+router.post("/", async (req, res) => {
   try {
     const { userId, productId } = req.body;
 
@@ -24,27 +24,31 @@ router.post("/", async (req, res, next) => {
         existingReview._id,
         req.body
       );
-      res.json({
+      return res.json({
         status: "success",
-        message: "Your review has been updated successfully",
+        message: "Your review has been updated successfully.",
         review: updatedReview,
       });
     } else {
       // Insert a new review
       const newReview = await insertReview(req.body);
-      res.json({
+      return res.json({
         status: "success",
-        message: "Your new review has been added successfully",
+        message: "Your new review has been added successfully.",
         review: newReview,
       });
     }
   } catch (error) {
-    next(error);
+    console.error("Error adding or updating review:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while adding or updating the review.",
+    });
   }
 });
 
 // Update review
-router.patch("/", async (req, res, next) => {
+router.patch("/", async (req, res) => {
   try {
     const { _id, status, title, rating, description } = req.body;
     const review = await updateAReviewById(_id, {
@@ -53,75 +57,106 @@ router.patch("/", async (req, res, next) => {
       rating,
       description,
     });
+
     if (!review) {
       return res.status(404).json({
         status: "error",
-        message: "Review not found",
+        message: "Review not found.",
       });
     }
-    res.json({
+
+    return res.json({
       status: "success",
-      message: "The review has been updated successfully",
+      message: "The review has been updated successfully.",
       review,
     });
   } catch (error) {
-    next(error);
+    console.error("Error updating review:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while updating the review.",
+    });
   }
 });
 
 // Delete review
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    await deleteAReviewById(id);
-    res.json({
+    const result = await deleteAReviewById(id);
+
+    if (!result) {
+      return res.status(404).json({
+        status: "error",
+        message: "Review not found.",
+      });
+    }
+
+    return res.json({
       status: "success",
-      message: "Review deleted successfully",
+      message: "Review deleted successfully.",
     });
   } catch (error) {
-    next(error);
+    console.error("Error deleting review:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while deleting the review.",
+    });
   }
 });
 
 // Get all reviews for admin
-router.get("/all", async (req, res, next) => {
+router.get("/all", async (req, res) => {
   try {
     const reviews = await getAllReviews();
-    res.json({
+    return res.json({
       status: "success",
       reviews,
     });
   } catch (error) {
-    next(error);
+    console.error("Error fetching all reviews:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while fetching all reviews.",
+    });
   }
 });
 
 // Get active reviews for public
-router.get("/", async (req, res, next) => {
+router.get("/", async (req, res) => {
   try {
     const reviews = await getAllReviews({ status: "active" });
-    res.json({
+    return res.json({
       status: "success",
       reviews,
     });
   } catch (error) {
-    next(error);
+    console.error("Error fetching active reviews:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while fetching active reviews.",
+    });
   }
 });
 
 // Get reviews by product ID
-router.get("/product/:productId", async (req, res, next) => {
+router.get("/product/:productId", async (req, res) => {
   try {
     const { productId } = req.params;
     // Fetch reviews and sort by rating in descending order
     const reviews = await getReviewsByProductId(productId);
     reviews.sort((a, b) => b.rating - a.rating);
-    res.json({
+
+    return res.json({
       status: "success",
       reviews,
     });
   } catch (error) {
-    next(error);
+    console.error("Error fetching reviews by product ID:", error);
+    res.status(500).json({
+      status: "error",
+      message: "An error occurred while fetching reviews by product ID.",
+    });
   }
 });
 
