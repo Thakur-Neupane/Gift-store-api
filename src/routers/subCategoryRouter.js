@@ -1,4 +1,5 @@
 import express from "express";
+const router = express.Router();
 import slugify from "slugify";
 import {
   deleteSubCategory,
@@ -9,10 +10,8 @@ import {
   updateSubCategory,
 } from "../models/subcategory/SubCategoryModal.js";
 
-const router = express.Router();
-
 // Create sub-category
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
     const { title, parentCatId } = req.body;
 
@@ -34,13 +33,13 @@ router.post("/", async (req, res) => {
     if (subCat._id) {
       return res.status(201).json({
         status: "success",
-        message: "New sub-category has been added.",
+        message: "New sub-category has been added",
       });
     }
 
     res.status(500).json({
       status: "error",
-      message: "Unable to add sub-category, try again later.",
+      message: "Unable to add sub-category, try again later",
     });
   } catch (error) {
     console.error("Error creating sub-category:", error);
@@ -54,7 +53,7 @@ router.post("/", async (req, res) => {
 });
 
 // Get all sub-categories
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const categories = await getAllSubCategories();
     res.json({
@@ -63,65 +62,42 @@ router.get("/", async (req, res) => {
       categories,
     });
   } catch (error) {
-    console.error("Error fetching sub-categories:", error);
-    res.status(500).json({
-      status: "error",
-      message: "An error occurred while fetching sub-categories.",
-    });
+    next(error);
   }
 });
 
 // Get sub-category by slug
-router.get("/:slug", async (req, res) => {
+router.get("/:slug", async (req, res, next) => {
   try {
     const { slug } = req.params;
     const category = await getASubCategory(slug);
-
-    if (category) {
-      return res.json({
-        status: "success",
-        message: "Sub-category fetched successfully.",
-        category,
-      });
-    }
-
-    res.status(404).json({
-      status: "error",
-      message: "Sub-category not found.",
+    res.json({
+      status: "success",
+      message: "Sub-category fetched successfully",
+      category,
     });
   } catch (error) {
-    console.error("Error fetching sub-category:", error);
-    res.status(500).json({
-      status: "error",
-      message: "An error occurred while fetching the sub-category.",
-    });
+    next(error);
   }
 });
 
 // Delete sub-category by slug
-router.delete("/:slug", async (req, res) => {
+router.delete("/:slug", async (req, res, next) => {
   try {
     const { slug } = req.params;
     const deletedCategory = await deleteSubCategory(slug);
 
     if (!deletedCategory) {
-      return res.status(404).json({
-        status: "error",
-        message: "Sub-category not found.",
-      });
+      return res.status(404).json({ message: "Sub-category not found" });
     }
 
-    res.json({
+    return res.json({
       status: "success",
       message: "Sub-category has been deleted successfully.",
       deletedCategory,
     });
   } catch (error) {
-    console.error("Error deleting sub-category:", error);
-    res.status(500).json({
-      status: "error",
-      message: "An error occurred while deleting the sub-category.",
-    });
+    next(error);
   }
 });
 
@@ -134,22 +110,21 @@ router.put("/:slug", async (req, res) => {
       slug: slugify(req.body.title),
       status: req.body.status,
     });
-
     if (updatedSubCategory) {
-      return res.json({
+      return res.status(200).json({
         status: "success",
         message: "Sub-category updated successfully.",
         data: updatedSubCategory,
       });
     } else {
       return res.status(404).json({
-        status: "error",
+        status: "fail",
         message: "Sub-category not found.",
       });
     }
   } catch (error) {
     console.error("Error updating sub-category:", error);
-    res.status(500).json({
+    return res.status(500).json({
       status: "error",
       message: "An error occurred while updating the sub-category.",
     });
@@ -157,22 +132,18 @@ router.put("/:slug", async (req, res) => {
 });
 
 // Get all sub-categories by parent category id
-router.get("/parent/:parentCatId", async (req, res) => {
+router.get("/parent/:parentCatId", async (req, res, next) => {
   try {
     const { parentCatId } = req.params;
     const subCategories = await getAllSubCategoriesByParentCatId(parentCatId);
 
     res.json({
       status: "success",
-      message: "Sub-categories fetched successfully.",
+      message: "Sub-categories fetched successfully",
       subCategories,
     });
   } catch (error) {
-    console.error("Error fetching sub-categories by parent ID:", error);
-    res.status(500).json({
-      status: "error",
-      message: "An error occurred while fetching sub-categories.",
-    });
+    next(error);
   }
 });
 
