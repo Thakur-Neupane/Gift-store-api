@@ -30,7 +30,7 @@ const productSchema = new mongoose.Schema(
         ref: "SubCategory",
       },
     ],
-    quantity: Number,
+    quantity: { type: Number, required: true },
     sold: {
       type: Number,
       default: 0,
