@@ -23,7 +23,3 @@ export const deleteCategory = (slug) => {
 export const updateCategory = (slug, updateData) => {
   return CategorySchema.findOneAndUpdate({ slug }, updateData, { new: true });
 };
-
-// export const deleteManyCategory = (filter) => {
-//   return CategorySchema.deleteMany(filter);
-// };
