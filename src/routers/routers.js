@@ -4,6 +4,7 @@ import productRouter from "./productRouter.js";
 import subCategoryRouter from "./subCategoryRouter.js";
 import cloudinaryRouter from "./cloudinaryRouter.js";
 import reviewRouter from "./reviewRouter.js";
+import cartRouter from "./cartRouter.js";
 import { auth } from "../middlewares/auth.js";
 
 export default [
@@ -32,5 +33,9 @@ export default [
   {
     path: "/api/v1/reviews",
     middlewares: [reviewRouter],
+  },
+  {
+    path: "/api/v1/checkout",
+    middlewares: [cartRouter],
   },
 ];
