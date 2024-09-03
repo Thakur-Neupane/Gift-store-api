@@ -1,5 +1,4 @@
 import express from "express";
-import mongoose from "mongoose";
 import Cart from "../models/cart/cartSchema.js"; // Adjust the path if needed
 import User from "../models/user/UserSchema.js"; // Adjust the path if needed
 import Product from "../models/product/ProductSchema.js"; // Adjust the path if needed
@@ -58,38 +57,26 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// Get cart by user ID
 router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    // Check if userId is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid user ID format",
-      });
-    }
-
     const cart = await Cart.findOne({ orderedBy: userId })
-      .populate("products.product") // Populate product field
+      .populate("products.product", "_id title price")
       .exec();
 
     if (!cart) {
-      return res.status(404).json({
-        status: "error",
-        message: "Cart not found",
-      });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Cart not found" });
     }
 
-    res.json({
-      status: "success",
-      cart,
-    });
+    res.json({ status: "success", cart });
   } catch (error) {
     next(error);
   }
 });
+
 // Delete cart by user ID
 router.delete("/:userId", async (req, res, next) => {
   try {

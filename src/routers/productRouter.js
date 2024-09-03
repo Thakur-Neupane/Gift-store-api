@@ -77,7 +77,7 @@ router.post("/", async (req, res) => {
       name,
       sku,
       category,
-      qty,
+      quantity,
       price,
       salesPrice,
       salesStart,
@@ -91,7 +91,7 @@ router.post("/", async (req, res) => {
       images,
     } = req.body;
 
-    if (!name || !sku || !category || !qty || !price) {
+    if (!name || !sku || !category || !quantity || !price) {
       return res.status(400).json({
         status: "error",
         message: "Required fields are missing",
@@ -107,7 +107,7 @@ router.post("/", async (req, res) => {
       sku,
       slug: productSlug,
       category,
-      qty,
+      quantity,
       price,
       salesPrice,
       salesStart,
