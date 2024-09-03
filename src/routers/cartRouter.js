@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import Cart from "../models/cart/cartSchema.js"; // Adjust the path if needed
 import User from "../models/user/UserSchema.js"; // Adjust the path if needed
 import Product from "../models/product/ProductSchema.js"; // Adjust the path if needed
@@ -17,17 +18,7 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    // Validate items
-    for (const item of items) {
-      if (!item.product || !item.count || !item.color || !item.price) {
-        return res.status(400).json({
-          status: "error",
-          message: "Invalid item format",
-        });
-      }
-    }
-
-    // Find the user based on userId
+    // Find the user
     const user = await User.findById(userId).exec();
     if (!user) {
       return res.status(404).json({
@@ -36,12 +27,21 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    // Remove any existing cart for the user
+    // Map items to the correct format
+    const formattedItems = items.map((item) => ({
+      product: item._id, // Use _id as the reference to the Product
+      count: item.count,
+      color: item.color,
+      price: item.price,
+      size: item.size || undefined, // Optional
+    }));
+
+    // Remove existing cart for the user
     await Cart.findOneAndDelete({ orderedBy: user._id }).exec();
 
-    // Create a new cart
-    let newCart = new Cart({
-      products: items,
+    // Create and save a new cart
+    const newCart = new Cart({
+      products: formattedItems,
       cartTotal: total,
       orderedBy: user._id,
     });
@@ -62,8 +62,17 @@ router.post("/", async (req, res, next) => {
 router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
+
+    // Check if userId is a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid user ID format",
+      });
+    }
+
     const cart = await Cart.findOne({ orderedBy: userId })
-      .populate("products.Product")
+      .populate("products.product") // Populate product field
       .exec();
 
     if (!cart) {
@@ -81,7 +90,6 @@ router.get("/:userId", async (req, res, next) => {
     next(error);
   }
 });
-
 // Delete cart by user ID
 router.delete("/:userId", async (req, res, next) => {
   try {
