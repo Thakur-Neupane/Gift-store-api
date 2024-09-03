@@ -6,7 +6,6 @@ import Product from "../models/product/ProductSchema.js"; // Adjust the path if 
 const router = express.Router();
 
 // Create or update cart
-// Create or update cart
 router.post("/", async (req, res, next) => {
   try {
     const { items, total, userId, title } = req.body;
@@ -65,7 +64,7 @@ router.get("/:userId", async (req, res, next) => {
     const { userId } = req.params;
 
     const cart = await Cart.findOne({ orderedBy: userId })
-      .populate("products.product", "_id title price")
+      .populate("products.product", "_id name price")
       .exec();
 
     if (!cart) {
