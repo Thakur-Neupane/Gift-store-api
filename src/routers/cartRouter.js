@@ -6,9 +6,10 @@ import Product from "../models/product/ProductSchema.js"; // Adjust the path if 
 const router = express.Router();
 
 // Create or update cart
+// Create or update cart
 router.post("/", async (req, res, next) => {
   try {
-    const { items, total, userId } = req.body;
+    const { items, total, userId, title } = req.body;
 
     if (!items || !items.length) {
       return res.status(400).json({
@@ -32,6 +33,7 @@ router.post("/", async (req, res, next) => {
       count: item.count,
       color: item.color,
       price: item.price,
+      title: item.title, // Make sure to include title
       size: item.size || undefined, // Optional
     }));
 
@@ -43,6 +45,7 @@ router.post("/", async (req, res, next) => {
       products: formattedItems,
       cartTotal: total,
       orderedBy: user._id,
+      title: title, // Save the title
     });
 
     await newCart.save();

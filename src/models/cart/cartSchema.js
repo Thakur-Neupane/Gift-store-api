@@ -24,6 +24,10 @@ const cartSchema = new mongoose.Schema(
         size: {
           type: String,
         },
+        title: {
+          type: String,
+          required: true,
+        },
       },
     ],
     cartTotal: {
