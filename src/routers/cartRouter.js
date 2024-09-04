@@ -1,11 +1,11 @@
 import express from "express";
-import Cart from "../models/cart/cartSchema.js"; // Adjust the path if needed
-import User from "../models/user/UserSchema.js"; // Adjust the path if needed
-import Product from "../models/product/ProductSchema.js"; // Adjust the path if needed
+import Cart from "../models/cart/cartSchema.js";
+import User from "../models/user/UserSchema.js";
+import Product from "../models/product/ProductSchema.js";
 
 const router = express.Router();
 
-// Create or update cart
+// Create or update cart without address
 router.post("/", async (req, res, next) => {
   try {
     const { items, total, userId, title } = req.body;
@@ -28,12 +28,12 @@ router.post("/", async (req, res, next) => {
 
     // Map items to the correct format
     const formattedItems = items.map((item) => ({
-      product: item._id, // Use _id as the reference to the Product
+      product: item._id,
       count: item.count,
       color: item.color,
       price: item.price,
-      title: item.title, // Make sure to include title
-      size: item.size || undefined, // Optional
+      title: item.title,
+      size: item.size || undefined,
     }));
 
     // Remove existing cart for the user
@@ -44,7 +44,7 @@ router.post("/", async (req, res, next) => {
       products: formattedItems,
       cartTotal: total,
       orderedBy: user._id,
-      title: title, // Save the title
+      title: title,
     });
 
     await newCart.save();
@@ -59,6 +59,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+// Get cart by user ID
 router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
@@ -68,14 +69,62 @@ router.get("/:userId", async (req, res, next) => {
       .exec();
 
     if (!cart) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Cart not found" });
+      return res.status(404).json({
+        status: "error",
+        message: "Cart not found",
+      });
     }
 
     res.json({ status: "success", cart });
   } catch (error) {
     next(error);
+  }
+});
+
+router.put("/update-address/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const address = req.body;
+
+    if (
+      !address ||
+      !address.unitNumber ||
+      !address.street ||
+      !address.city ||
+      !address.state ||
+      !address.zipCode ||
+      !address.country ||
+      !address.phoneNumber
+    ) {
+      return res.status(400).json({
+        status: "error",
+        message: "Complete address is required",
+      });
+    }
+
+    // Update cart with new address
+    const cart = await Cart.findOneAndUpdate(
+      { orderedBy: userId },
+      { address },
+      { new: true }
+    ).exec();
+
+    if (!cart) {
+      return res.status(404).json({
+        status: "error",
+        message: "Cart not found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      cart,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      message: error.message,
+    });
   }
 });
 

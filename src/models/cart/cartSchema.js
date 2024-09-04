@@ -26,7 +26,6 @@ const cartSchema = new mongoose.Schema(
         },
         title: {
           type: String,
-          // required: true,
         },
       },
     ],
@@ -44,38 +43,14 @@ const cartSchema = new mongoose.Schema(
       required: true,
     },
     address: {
-      unitNumber: {
-        type: String,
-        required: true,
-      },
-      street: {
-        type: String,
-        required: true,
-      },
-      city: {
-        type: String,
-        required: true,
-      },
-      state: {
-        type: String,
-        required: true,
-      },
-      zipCode: {
-        type: String,
-        required: true,
-      },
-      country: {
-        type: String,
-        required: true,
-      },
-      phoneNumber: {
-        type: String,
-        required: true,
-      },
-      message: {
-        type: String,
-        default: "",
-      },
+      unitNumber: { type: String },
+      street: { type: String },
+      city: { type: String },
+      state: { type: String },
+      zipCode: { type: String },
+      country: { type: String },
+      phoneNumber: { type: String },
+      message: { type: String },
     },
   },
   {
