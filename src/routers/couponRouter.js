@@ -1,5 +1,5 @@
 import express from "express";
-import Coupon from "../models/coupon/couponSchema.js"; // Adjust the path as needed
+import Coupon from "../models/coupon/couponSchema.js";
 
 const router = express.Router();
 
