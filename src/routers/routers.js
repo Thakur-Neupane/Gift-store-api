@@ -6,6 +6,7 @@ import cloudinaryRouter from "./cloudinaryRouter.js";
 import reviewRouter from "./reviewRouter.js";
 import cartRouter from "./cartRouter.js";
 import couponRouter from "./couponRouter.js";
+import stripeRouter from "./stripeRouter.js";
 import { auth } from "../middlewares/auth.js";
 
 export default [
@@ -42,5 +43,9 @@ export default [
   {
     path: "/api/v1/coupons",
     middlewares: [couponRouter],
+  },
+  {
+    path: "/api/v1/payment",
+    middlewares: [stripeRouter],
   },
 ];

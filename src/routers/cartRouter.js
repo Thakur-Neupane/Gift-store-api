@@ -1,6 +1,7 @@
 import express from "express";
 import Cart from "../models/cart/cartSchema.js";
 import User from "../models/user/UserSchema.js";
+import Coupon from "../models/coupon/couponSchema.js"; // Import the Coupon model
 import Product from "../models/product/ProductSchema.js";
 
 const router = express.Router();
@@ -81,6 +82,7 @@ router.get("/:userId", async (req, res, next) => {
   }
 });
 
+// Update address for the cart
 router.put("/update-address/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -161,6 +163,72 @@ router.delete("/", async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+});
+
+// Apply coupon to user cart
+// Apply coupon to user cart
+router.post("/apply-coupon", async (req, res) => {
+  const { coupon } = req.body;
+  console.log("COUPON", coupon);
+
+  try {
+    // Find the coupon
+    const validCoupon = await Coupon.findOne({ name: coupon }).exec();
+    if (!validCoupon) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid coupon code",
+      });
+    }
+    console.log("VALID COUPON", validCoupon);
+
+    // Find the user
+    const user = await User.findOne({ email: req.user.email }).exec();
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Find the cart
+    const cart = await Cart.findOne({ orderedBy: user._id })
+      .populate("products.product", "_id title price")
+      .exec();
+
+    if (!cart) {
+      return res.status(404).json({
+        status: "error",
+        message: "Cart not found",
+      });
+    }
+
+    const { cartTotal } = cart;
+    console.log("cartTotal", cartTotal, "discount%", validCoupon.discount);
+
+    // Calculate the total after discount
+    const discountAmount = (cartTotal * validCoupon.discount) / 100;
+    const totalAfterDiscount = (cartTotal - discountAmount).toFixed(2);
+
+    // Update cart with the new total after discount
+    const updatedCart = await Cart.findOneAndUpdate(
+      { orderedBy: user._id },
+      { totalAfterDiscount },
+      { new: true }
+    ).exec();
+
+    res.json({
+      status: "success",
+      totalAfterDiscount,
+      cart: updatedCart,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: "error",
+      message: error.message,
+    });
   }
 });
 

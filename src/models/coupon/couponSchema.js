@@ -8,7 +8,7 @@ const couponSchema = new mongoose.Schema(
       unique: true,
       uppercase: true,
       required: [true, "Name is required"],
-      minlength: [6, "Name is too short"],
+      minlength: [3, "Name is too short"],
       maxlength: [12, "Name is too long"],
     },
     expiry: {
