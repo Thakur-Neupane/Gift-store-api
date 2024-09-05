@@ -15,10 +15,12 @@ router.post("/uploadimages", async (req, res) => {
   try {
     const { images } = req.body;
 
-    if (!images || !Array.isArray(images)) {
-      return res.status(400).json({ message: "No images data provided" });
+    // Validate images input
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ message: "Invalid images data provided" });
     }
 
+    // Check if images are in base64 format or URLs
     const uploadPromises = images.map((image) =>
       cloudinary.v2.uploader.upload(image, {
         folder: "product_images",
@@ -27,17 +29,21 @@ router.post("/uploadimages", async (req, res) => {
       })
     );
 
+    // Upload images
     const results = await Promise.all(uploadPromises);
 
+    // Map to desired response format
     const uploadedImages = results.map((result) => ({
       url: result.secure_url,
       public_id: result.public_id,
     }));
 
-    res.json(uploadedImages);
+    res.status(200).json(uploadedImages);
   } catch (error) {
     console.error("Image upload error:", error);
-    res.status(500).json({ message: "Image upload failed", error });
+    res
+      .status(500)
+      .json({ message: "Image upload failed", error: error.message });
   }
 });
 
@@ -46,20 +52,27 @@ router.post("/removeimages", async (req, res) => {
   try {
     const { public_id } = req.body;
 
+    // Validate public_id input
     if (!public_id) {
       return res.status(400).json({ message: "Public ID is required" });
     }
 
+    // Remove image
     const result = await cloudinary.v2.uploader.destroy(public_id);
 
+    // Check result
     if (result.result === "ok") {
-      res.json({ message: "Image removed successfully" });
+      res.status(200).json({ message: "Image removed successfully" });
     } else {
-      res.status(500).json({ message: "Image removal failed" });
+      res
+        .status(400)
+        .json({ message: "Image removal failed", reason: result.result });
     }
   } catch (error) {
     console.error("Image remove error:", error);
-    res.status(500).json({ message: "Image removal failed", error });
+    res
+      .status(500)
+      .json({ message: "Image removal failed", error: error.message });
   }
 });
 
