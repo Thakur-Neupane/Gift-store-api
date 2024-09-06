@@ -4,7 +4,10 @@ import Coupon from "../models/coupon/couponSchema.js";
 const router = express.Router();
 
 // Utility function to convert a string to uppercase
-const toUpperCase = (str) => (str ? str.toUpperCase() : str);
+const toUpperCase = (str) => {
+  if (!str) return str; // Handle empty or undefined strings
+  return str.toUpperCase(); // Convert the entire string to uppercase
+};
 
 // Create a new coupon
 router.post("/", async (req, res, next) => {
@@ -18,14 +21,16 @@ router.post("/", async (req, res, next) => {
   }
 
   try {
+    // Convert the name to uppercase
     const upperCaseName = toUpperCase(name);
+
     const newCoupon = new Coupon({ name: upperCaseName, expiry, discount });
-    const savedCoupon = await newCoupon.save();
+    await newCoupon.save();
 
     res.status(201).json({
       status: "success",
       message: "Coupon created successfully",
-      coupon: savedCoupon,
+      coupon: newCoupon,
     });
   } catch (error) {
     next(error);
@@ -84,10 +89,11 @@ router.put("/:couponId", async (req, res, next) => {
   }
 
   try {
-    const updateData = { name: toUpperCase(name), expiry, discount };
-    const updatedCoupon = await Coupon.findByIdAndUpdate(couponId, updateData, {
-      new: true,
-    }).exec();
+    const updatedCoupon = await Coupon.findByIdAndUpdate(
+      couponId,
+      { name: toUpperCase(name), expiry, discount },
+      { new: true }
+    ).exec();
 
     if (!updatedCoupon) {
       return res.status(404).json({
@@ -119,7 +125,7 @@ router.post("/apply", async (req, res, next) => {
 
   try {
     const validCoupon = await Coupon.findOne({
-      name: toUpperCase(coupon),
+      name: coupon.toUpperCase(),
     }).exec();
 
     if (!validCoupon) {
@@ -129,6 +135,7 @@ router.post("/apply", async (req, res, next) => {
       });
     }
 
+    // Calculate the discount
     const discountAmount = (cartTotal * (validCoupon.discount / 100)).toFixed(
       2
     );
