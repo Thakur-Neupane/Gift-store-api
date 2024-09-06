@@ -12,91 +12,68 @@ const router = express.Router();
 
 // Add or update a review
 router.post("/", async (req, res, next) => {
-  const { userId, productId } = req.body;
-
-  if (!userId || !productId) {
-    return res.status(400).json({
-      status: "error",
-      message: "User ID and Product ID are required",
-    });
-  }
-
   try {
+    const { userId, productId } = req.body;
+
+    // Check if the review already exists
     const existingReview = await getReviewByUserAndProduct(userId, productId);
 
     if (existingReview) {
+      // Update the existing review
       const updatedReview = await updateAReviewById(
         existingReview._id,
         req.body
       );
-      return res.json({
+      res.json({
         status: "success",
-        message: "Review updated successfully",
+        message: "Your review has been updated successfully",
         review: updatedReview,
       });
+    } else {
+      // Insert a new review
+      const newReview = await insertReview(req.body);
+      res.json({
+        status: "success",
+        message: "Your new review has been added successfully",
+        review: newReview,
+      });
     }
-
-    const newReview = await insertReview(req.body);
-    res.status(201).json({
-      status: "success",
-      message: "Review added successfully",
-      review: newReview,
-    });
   } catch (error) {
     next(error);
   }
 });
 
-// Update a review
+// Update review
 router.patch("/", async (req, res, next) => {
-  const { _id, status, title, rating, description } = req.body;
-
-  if (!_id) {
-    return res.status(400).json({
-      status: "error",
-      message: "Review ID is required",
-    });
-  }
-
   try {
-    const updatedReview = await updateAReviewById(_id, {
+    const { _id, status, title, rating, description } = req.body;
+    const review = await updateAReviewById(_id, {
       status,
       title,
       rating,
       description,
     });
-
-    if (!updatedReview) {
+    if (!review) {
       return res.status(404).json({
         status: "error",
         message: "Review not found",
       });
     }
-
     res.json({
       status: "success",
-      message: "Review updated successfully",
-      review: updatedReview,
+      message: "The review has been updated successfully",
+      review,
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Delete a review
+// Delete review
 router.delete("/:id", async (req, res, next) => {
-  const { id } = req.params;
-
   try {
-    const result = await deleteAReviewById(id);
-
-    if (!result) {
-      return res.status(404).json({
-        status: "error",
-        message: "Review not found",
-      });
-    }
-
+    const { id } = req.params;
+    await deleteAReviewById(id);
     res.json({
       status: "success",
       message: "Review deleted successfully",
@@ -106,7 +83,7 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-// Get all reviews (admin access)
+// Get all reviews for admin
 router.get("/all", async (req, res, next) => {
   try {
     const reviews = await getAllReviews();
@@ -119,7 +96,7 @@ router.get("/all", async (req, res, next) => {
   }
 });
 
-// Get active reviews (public access)
+// Get active reviews for public
 router.get("/", async (req, res, next) => {
   try {
     const reviews = await getAllReviews({ status: "active" });
@@ -134,19 +111,11 @@ router.get("/", async (req, res, next) => {
 
 // Get reviews by product ID
 router.get("/product/:productId", async (req, res, next) => {
-  const { productId } = req.params;
-
-  if (!productId) {
-    return res.status(400).json({
-      status: "error",
-      message: "Product ID is required",
-    });
-  }
-
   try {
+    const { productId } = req.params;
+    // Fetch reviews and sort by rating in descending order
     const reviews = await getReviewsByProductId(productId);
     reviews.sort((a, b) => b.rating - a.rating);
-
     res.json({
       status: "success",
       reviews,
