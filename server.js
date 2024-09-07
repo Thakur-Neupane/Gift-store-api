@@ -1,11 +1,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-
-// Import the database connection function
 import { connectDb } from "./src/config/dbConfig.js";
-
-// Import routers
 import routers from "./src/routers/routers.js";
 
 const app = express();
@@ -15,22 +11,24 @@ const PORT = process.env.PORT || 8001;
 connectDb();
 
 // CORS configuration
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(",") || [
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (allowedOrigins.includes(origin) || !origin) {
-        // Allow requests with no origin, like mobile apps or curl requests
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: "GET, POST, PUT, DELETE, PATCH",
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: "GET, POST, PUT, DELETE, PATCH",
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // Middlewares
 app.use(express.json());
@@ -56,6 +54,7 @@ app.use("*", (req, res, next) => {
 
 // Error Handler
 app.use((error, req, res, next) => {
+  console.error(error.stack); // Log stack trace for debugging
   res.status(error.statusCode || 500).json({
     status: "error",
     message: error.message,
@@ -65,7 +64,7 @@ app.use((error, req, res, next) => {
 // Start the server
 app.listen(PORT, (error) => {
   if (error) {
-    console.error(error);
+    console.error("Failed to start the server:", error);
   } else {
     console.log(`Server running at http://localhost:${PORT}`);
   }
