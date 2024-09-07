@@ -1,10 +1,24 @@
 import express from "express";
 import Cart from "../models/cart/cartSchema.js";
 import User from "../models/user/UserSchema.js";
-import Coupon from "../models/coupon/couponSchema.js"; // Import the Coupon model
-import Product from "../models/product/ProductSchema.js";
+import Coupon from "../models/coupon/couponSchema.js";
+import Product from "../models/product/ProductSchema.js"; // Product model imported but not used in the current routes
 
 const router = express.Router();
+
+// Helper function to validate address
+const validateAddress = (address) => {
+  const requiredFields = [
+    "unitNumber",
+    "street",
+    "city",
+    "state",
+    "zipCode",
+    "country",
+    "phoneNumber",
+  ];
+  return requiredFields.every((field) => address[field]);
+};
 
 // Create or update cart without address
 router.post("/", async (req, res, next) => {
@@ -45,7 +59,7 @@ router.post("/", async (req, res, next) => {
       products: formattedItems,
       cartTotal: total,
       orderedBy: user._id,
-      title: title,
+      title,
     });
 
     await newCart.save();
@@ -83,21 +97,12 @@ router.get("/:userId", async (req, res, next) => {
 });
 
 // Update address for the cart
-router.put("/update-address/:userId", async (req, res) => {
+router.put("/update-address/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
     const address = req.body;
 
-    if (
-      !address ||
-      !address.unitNumber ||
-      !address.street ||
-      !address.city ||
-      !address.state ||
-      !address.zipCode ||
-      !address.country ||
-      !address.phoneNumber
-    ) {
+    if (!validateAddress(address)) {
       return res.status(400).json({
         status: "error",
         message: "Complete address is required",
@@ -123,10 +128,7 @@ router.put("/update-address/:userId", async (req, res) => {
       cart,
     });
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
+    next(error);
   }
 });
 
@@ -167,10 +169,8 @@ router.delete("/", async (req, res, next) => {
 });
 
 // Apply coupon to user cart
-// Apply coupon to user cart
-router.post("/apply-coupon", async (req, res) => {
+router.post("/apply-coupon", async (req, res, next) => {
   const { coupon } = req.body;
-  console.log("COUPON", coupon);
 
   try {
     // Find the coupon
@@ -181,7 +181,6 @@ router.post("/apply-coupon", async (req, res) => {
         message: "Invalid coupon code",
       });
     }
-    console.log("VALID COUPON", validCoupon);
 
     // Find the user
     const user = await User.findOne({ email: req.user.email }).exec();
@@ -205,7 +204,6 @@ router.post("/apply-coupon", async (req, res) => {
     }
 
     const { cartTotal } = cart;
-    console.log("cartTotal", cartTotal, "discount%", validCoupon.discount);
 
     // Calculate the total after discount
     const discountAmount = (cartTotal * validCoupon.discount) / 100;
@@ -224,11 +222,7 @@ router.post("/apply-coupon", async (req, res) => {
       cart: updatedCart,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
+    next(error);
   }
 });
 
