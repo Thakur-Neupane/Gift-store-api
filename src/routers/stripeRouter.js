@@ -1,28 +1,54 @@
-// server/stripeRouter.js
 import express from "express";
 import Stripe from "stripe";
+import User from "../models/user/UserSchema.js";
+import Cart from "../models/cart/cartSchema.js";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET);
 
+// Route to create a Stripe payment intent
 router.post("/create-payment-intent", async (req, res) => {
   try {
-    const { amount, currency, paymentMethod } = req.body;
+    const { couponApplied } = req.body;
 
-    if (!amount || !currency || !paymentMethod) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // 1. Find the user
+    const user = await User.findOne({ email: req.user.email }).exec();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
 
+    // 2. Get user cart total
+    const cart = await Cart.findOne({ orderdBy: user._id }).exec();
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+
+    const { cartTotal, totalAfterDiscount } = cart;
+
+    // 3. Calculate the final amount
+    let finalAmount = 0;
+    if (couponApplied && totalAfterDiscount) {
+      finalAmount = totalAfterDiscount * 100; // Convert to smallest currency unit
+    } else {
+      finalAmount = cartTotal * 100; // Convert to smallest currency unit
+    }
+
+    // 4. Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // Convert amount to smallest currency unit
-      currency,
-      payment_method_types: [paymentMethod],
+      amount: finalAmount,
+      currency: "usd", // Ensure this matches your currency
     });
 
-    return res.json({ clientSecret: paymentIntent.client_secret });
+    // 5. Send the client secret and other details back to the client
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      cartTotal,
+      totalAfterDiscount,
+      payable: finalAmount,
+    });
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    return res.status(500).json({
+    res.status(500).json({
       status: "error",
       message: "Something went wrong",
     });
