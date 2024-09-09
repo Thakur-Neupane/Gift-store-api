@@ -6,40 +6,32 @@ import Cart from "../models/cart/cartSchema.js";
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET);
 
-// Route to create a Stripe payment intent
 router.post("/create-payment-intent", async (req, res) => {
   try {
     const { couponApplied } = req.body;
+    console.log(req.body);
 
-    // 1. Find the user
+    // Fetch user and cart details from the database
     const user = await User.findOne({ email: req.user.email }).exec();
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // 2. Get user cart total
     const cart = await Cart.findOne({ orderdBy: user._id }).exec();
-    if (!cart) {
-      return res.status(404).json({ error: "Cart not found" });
-    }
+    if (!cart) return res.status(404).json({ error: "Cart not found" });
 
     const { cartTotal, totalAfterDiscount } = cart;
+    const finalAmount =
+      couponApplied && totalAfterDiscount
+        ? totalAfterDiscount * 100
+        : cartTotal * 100;
 
-    // 3. Calculate the final amount
-    let finalAmount = 0;
-    if (couponApplied && totalAfterDiscount) {
-      finalAmount = totalAfterDiscount * 100; // Convert to smallest currency unit
-    } else {
-      finalAmount = cartTotal * 100; // Convert to smallest currency unit
-    }
-
-    // 4. Create payment intent with Stripe
+    // Create payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmount,
-      currency: "usd", // Ensure this matches your currency
+      currency: "usd",
     });
 
-    // 5. Send the client secret and other details back to the client
+    console.log("Payment Intent Created:", paymentIntent); // Debugging
+
     res.json({
       clientSecret: paymentIntent.client_secret,
       cartTotal,
@@ -47,10 +39,10 @@ router.post("/create-payment-intent", async (req, res) => {
       payable: finalAmount,
     });
   } catch (error) {
-    console.error("Error creating payment intent:", error);
+    console.error("Error creating payment intent:", error); // Detailed error logging
     res.status(500).json({
       status: "error",
-      message: "Something went wrong",
+      message: error.message || "Something went wrong",
     });
   }
 });
