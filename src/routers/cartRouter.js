@@ -9,7 +9,7 @@ const router = express.Router();
 // Create or update cart without address
 router.post("/", async (req, res, next) => {
   try {
-    const { items, total, userId, title } = req.body;
+    const { items, total, userId, title, totalAfterDiscount } = req.body;
 
     if (!items || !items.length) {
       return res.status(400).json({
@@ -18,7 +18,6 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    // Find the user
     const user = await User.findById(userId).exec();
     if (!user) {
       return res.status(404).json({
@@ -27,9 +26,8 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    // Map items to the correct format
     const formattedItems = items.map((item) => ({
-      product: item._id,
+      product: item.product,
       count: item.count,
       color: item.color,
       price: item.price,
@@ -44,6 +42,7 @@ router.post("/", async (req, res, next) => {
     const newCart = new Cart({
       products: formattedItems,
       cartTotal: total,
+      totalAfterDiscount: totalAfterDiscount || total, // Set to total if no discount
       orderedBy: user._id,
       title: title,
     });
@@ -168,9 +167,9 @@ router.delete("/", async (req, res, next) => {
 
 // Apply coupon to user cart
 // Apply coupon to user cart
-router.post("/apply-coupon", async (req, res) => {
+router.post("/apply-coupon/:userId", async (req, res) => {
   const { coupon } = req.body;
-  console.log("COUPON", coupon);
+  const { userId } = req.params;
 
   try {
     // Find the coupon
@@ -181,10 +180,9 @@ router.post("/apply-coupon", async (req, res) => {
         message: "Invalid coupon code",
       });
     }
-    console.log("VALID COUPON", validCoupon);
 
-    // Find the user
-    const user = await User.findOne({ email: req.user.email }).exec();
+    // Find the user by userId
+    const user = await User.findById(userId).exec();
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -192,7 +190,7 @@ router.post("/apply-coupon", async (req, res) => {
       });
     }
 
-    // Find the cart
+    // Find the cart for the user
     const cart = await Cart.findOne({ orderedBy: user._id })
       .populate("products.product", "_id title price")
       .exec();
@@ -205,7 +203,6 @@ router.post("/apply-coupon", async (req, res) => {
     }
 
     const { cartTotal } = cart;
-    console.log("cartTotal", cartTotal, "discount%", validCoupon.discount);
 
     // Calculate the total after discount
     const discountAmount = (cartTotal * validCoupon.discount) / 100;
@@ -229,6 +226,61 @@ router.post("/apply-coupon", async (req, res) => {
       status: "error",
       message: error.message,
     });
+  }
+});
+
+// Create or update cart
+router.post("/", async (req, res, next) => {
+  try {
+    const { items, total, userId, title } = req.body;
+
+    if (!items || !items.length) {
+      return res.status(400).json({
+        status: "error",
+        message: "Cart cannot be empty",
+      });
+    }
+
+    // Find the user by userId
+    const user = await User.findById(userId).exec();
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    // Map items to the correct format
+    const formattedItems = items.map((item) => ({
+      product: item.product._id,
+      count: item.count,
+      color: item.color,
+      price: item.price,
+      title: item.title,
+      size: item.size || undefined,
+    }));
+
+    // Remove existing cart for the user
+    await Cart.findOneAndDelete({ orderedBy: user._id }).exec();
+
+    // Create and save a new cart
+    const newCart = new Cart({
+      products: formattedItems,
+      cartTotal: total,
+      totalAfterDiscount: total, // Initially set this to total
+      orderedBy: user._id,
+      title: title,
+    });
+
+    await newCart.save();
+
+    res.json({
+      status: "success",
+      message: "Cart created successfully",
+      cart: newCart,
+    });
+  } catch (error) {
+    next(error);
   }
 });
 
