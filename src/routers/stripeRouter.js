@@ -9,6 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET);
 router.post("/create-payment-intent", async (req, res) => {
   try {
     const { userId, cart, couponApplied } = req.body;
+    console.log(req.body);
 
     // Validate required fields
     if (!userId) {
@@ -26,7 +27,7 @@ router.post("/create-payment-intent", async (req, res) => {
     let totalAfterDiscount = 0;
     if (cart && Array.isArray(cart.items)) {
       cartTotal = cart.items.reduce(
-        (acc, item) => acc + item.price * item.quantity,
+        (acc, item) => acc + (item.price || 0) * (item.quantity || 0),
         0
       );
 
@@ -42,7 +43,7 @@ router.post("/create-payment-intent", async (req, res) => {
     }
 
     // Calculate final amount
-    const finalAmount = totalAfterDiscount * 100; // Amount in cents
+    const finalAmount = Math.round(totalAfterDiscount * 100); // Amount in cents
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
