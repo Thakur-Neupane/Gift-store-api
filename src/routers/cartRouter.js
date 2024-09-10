@@ -88,19 +88,24 @@ router.put("/update-address/:userId", async (req, res) => {
     const { userId } = req.params;
     const address = req.body;
 
-    if (
-      !address ||
-      !address.unitNumber ||
-      !address.street ||
-      !address.city ||
-      !address.state ||
-      !address.zipCode ||
-      !address.country ||
-      !address.phoneNumber
-    ) {
+    // Validate address
+    const requiredFields = [
+      "unitNumber",
+      "street",
+      "city",
+      "state",
+      "zipCode",
+      "country",
+      "phoneNumber",
+    ];
+    const missingFields = requiredFields.filter((field) => !address[field]);
+
+    if (missingFields.length > 0) {
       return res.status(400).json({
         status: "error",
-        message: "Complete address is required",
+        message: `Complete address is required. Missing fields: ${missingFields.join(
+          ", "
+        )}`,
       });
     }
 
@@ -167,12 +172,17 @@ router.delete("/", async (req, res, next) => {
 });
 
 // Apply coupon to user cart
-// Apply coupon to user cart
 router.post("/apply-coupon", async (req, res) => {
-  const { coupon } = req.body;
-  console.log("COUPON", coupon);
-
   try {
+    const { coupon, userId } = req.body;
+
+    if (!coupon || !userId) {
+      return res.status(400).json({
+        status: "error",
+        message: "Coupon code and userId are required",
+      });
+    }
+
     // Find the coupon
     const validCoupon = await Coupon.findOne({ name: coupon }).exec();
     if (!validCoupon) {
@@ -181,7 +191,6 @@ router.post("/apply-coupon", async (req, res) => {
         message: "Invalid coupon code",
       });
     }
-    console.log("VALID COUPON", validCoupon);
 
     // Find the user
     const user = await User.findById(userId).exec();
@@ -205,7 +214,6 @@ router.post("/apply-coupon", async (req, res) => {
     }
 
     const { cartTotal } = cart;
-    console.log("cartTotal", cartTotal, "discount%", validCoupon.discount);
 
     // Calculate the total after discount
     const discountAmount = (cartTotal * validCoupon.discount) / 100;
@@ -214,7 +222,7 @@ router.post("/apply-coupon", async (req, res) => {
     // Update cart with the new total after discount
     const updatedCart = await Cart.findOneAndUpdate(
       { orderedBy: user._id },
-      { totalAfterDiscount },
+      { cartTotal: totalAfterDiscount },
       { new: true }
     ).exec();
 
