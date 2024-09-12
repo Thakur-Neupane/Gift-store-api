@@ -2,14 +2,14 @@ import express from "express";
 import Cart from "../models/cart/cartSchema.js";
 import User from "../models/user/UserSchema.js";
 import Coupon from "../models/coupon/couponSchema.js"; // Import the Coupon model
-import Product from "../models/product/ProductSchema.js";
 
 const router = express.Router();
 
-// Create or update cart without address
+// Create or update cart with optional address
 router.post("/", async (req, res, next) => {
   try {
-    const { items, total, userId, title } = req.body;
+    const { items, total, userId, title, address } = req.body;
+    console.log(req.body);
 
     if (!items || !items.length) {
       return res.status(400).json({
@@ -29,12 +29,11 @@ router.post("/", async (req, res, next) => {
 
     // Map items to the correct format
     const formattedItems = items.map((item) => ({
-      product: item._id,
+      product: item.product, // Ensure it's the correct field
       count: item.count,
       color: item.color,
       price: item.price,
-      title: item.title,
-      size: item.size || undefined,
+      title: item.title || undefined, // title may not be present
     }));
 
     // Remove existing cart for the user
@@ -46,6 +45,7 @@ router.post("/", async (req, res, next) => {
       cartTotal: total,
       orderedBy: user._id,
       title: title,
+      address: address || {}, // Save address if provided, default to empty object
     });
 
     await newCart.save();
@@ -65,10 +65,12 @@ router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
 
+    // Find the cart associated with the given user ID
     const cart = await Cart.findOne({ orderedBy: userId })
-      .populate("products.product", "_id name price")
+      .populate("products.product", "_id name price") // Populate product details
       .exec();
 
+    // If no cart is found, return a 404 error
     if (!cart) {
       return res.status(404).json({
         status: "error",
@@ -76,8 +78,16 @@ router.get("/:userId", async (req, res, next) => {
       });
     }
 
-    res.json({ status: "success", cart });
+    // Respond with the cart details
+    res.json({
+      status: "success",
+      cart: {
+        ...cart.toObject(), // Convert cart to a plain object to include virtual fields
+        cartTotal: cart.cartTotal.toFixed(2), // Ensure total is formatted to two decimal places
+      },
+    });
   } catch (error) {
+    // Pass errors to the error handler middleware
     next(error);
   }
 });
@@ -176,6 +186,7 @@ router.post("/apply-coupon", async (req, res) => {
   try {
     const { coupon, userId } = req.body;
 
+    // Validate input
     if (!coupon || !userId) {
       return res.status(400).json({
         status: "error",
@@ -215,24 +226,26 @@ router.post("/apply-coupon", async (req, res) => {
 
     const { cartTotal } = cart;
 
-    // Calculate the total after discount
+    // Calculate the discount amount and total after discount
     const discountAmount = (cartTotal * validCoupon.discount) / 100;
-    const totalAfterDiscount = (cartTotal - discountAmount).toFixed(2);
+    const totalAfterDiscount = cartTotal - discountAmount;
 
     // Update cart with the new total after discount
     const updatedCart = await Cart.findOneAndUpdate(
       { orderedBy: user._id },
-      { cartTotal: totalAfterDiscount },
+      { cartTotal: cartTotal },
+      { totalAfterDiscount: totalAfterDiscount.toFixed(2) },
       { new: true }
     ).exec();
 
     res.json({
       status: "success",
-      totalAfterDiscount,
+      totalAfterDiscount: totalAfterDiscount.toFixed(2),
+      coupon: validCoupon,
       cart: updatedCart,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error applying coupon:", error);
     res.status(500).json({
       status: "error",
       message: error.message,
