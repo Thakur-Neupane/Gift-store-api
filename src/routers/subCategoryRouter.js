@@ -1,4 +1,5 @@
 import express from "express";
+const router = express.Router();
 import slugify from "slugify";
 import {
   deleteSubCategory,
@@ -8,8 +9,6 @@ import {
   insertSubCategory,
   updateSubCategory,
 } from "../models/subcategory/SubCategoryModal.js";
-
-const router = express.Router();
 
 // Create sub-category
 router.post("/", async (req, res, next) => {
@@ -28,35 +27,28 @@ router.post("/", async (req, res, next) => {
     const subCat = await insertSubCategory({
       title,
       slug,
-      parent: parentCatId,
+      parent: parentCatId, // Ensure field name matches schema
     });
 
     if (subCat._id) {
       return res.status(201).json({
         status: "success",
-        message: "New sub-category has been added.",
-        subCategory: subCat,
+        message: "New sub-category has been added",
       });
     }
 
     res.status(500).json({
       status: "error",
-      message: "Unable to add sub-category, try again later.",
+      message: "Unable to add sub-category, try again later",
     });
   } catch (error) {
     console.error("Error creating sub-category:", error);
-    if (error.message.includes("E11000")) {
-      res.status(409).json({
-        status: "error",
-        message:
-          "This sub-category slug already exists, please change the name and try again.",
-      });
-    } else {
-      res.status(500).json({
-        status: "error",
-        message: "An error occurred.",
-      });
-    }
+    res.status(500).json({
+      status: "error",
+      message: error.message.includes("E11000")
+        ? "This sub-category slug already exists, please change the name and try again."
+        : "An error occurred.",
+    });
   }
 });
 
@@ -79,19 +71,11 @@ router.get("/:slug", async (req, res, next) => {
   try {
     const { slug } = req.params;
     const category = await getASubCategory(slug);
-
-    if (category) {
-      res.json({
-        status: "success",
-        message: "Sub-category fetched successfully.",
-        category,
-      });
-    } else {
-      res.status(404).json({
-        status: "fail",
-        message: "Sub-category not found.",
-      });
-    }
+    res.json({
+      status: "success",
+      message: "Sub-category fetched successfully",
+      category,
+    });
   } catch (error) {
     next(error);
   }
@@ -103,57 +87,44 @@ router.delete("/:slug", async (req, res, next) => {
     const { slug } = req.params;
     const deletedCategory = await deleteSubCategory(slug);
 
-    if (deletedCategory) {
-      res.json({
-        status: "success",
-        message: "Sub-category has been deleted successfully.",
-        deletedCategory,
-      });
-    } else {
-      res.status(404).json({
-        status: "fail",
-        message: "Sub-category not found.",
-      });
+    if (!deletedCategory) {
+      return res.status(404).json({ message: "Sub-category not found" });
     }
+
+    return res.json({
+      status: "success",
+      message: "Sub-category has been deleted successfully.",
+      deletedCategory,
+    });
   } catch (error) {
     next(error);
   }
 });
 
 // Update sub-category by slug
-router.put("/:slug", async (req, res, next) => {
+router.put("/:slug", async (req, res) => {
   try {
     const { slug } = req.params;
-    const { title, status } = req.body;
-
-    if (!title) {
-      return res.status(400).json({
-        status: "error",
-        message: "Title is required for updating sub-category.",
-      });
-    }
-
     const updatedSubCategory = await updateSubCategory(slug, {
-      title,
-      slug: slugify(title),
-      status,
+      title: req.body.title,
+      slug: slugify(req.body.title),
+      status: req.body.status,
     });
-
     if (updatedSubCategory) {
-      res.status(200).json({
+      return res.status(200).json({
         status: "success",
         message: "Sub-category updated successfully.",
         data: updatedSubCategory,
       });
     } else {
-      res.status(404).json({
+      return res.status(404).json({
         status: "fail",
         message: "Sub-category not found.",
       });
     }
   } catch (error) {
     console.error("Error updating sub-category:", error);
-    res.status(500).json({
+    return res.status(500).json({
       status: "error",
       message: "An error occurred while updating the sub-category.",
     });
@@ -168,7 +139,7 @@ router.get("/parent/:parentCatId", async (req, res, next) => {
 
     res.json({
       status: "success",
-      message: "Sub-categories fetched successfully.",
+      message: "Sub-categories fetched successfully",
       subCategories,
     });
   } catch (error) {
