@@ -64,14 +64,12 @@ router.post("/", async (req, res, next) => {
 router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
-    console.log(`User ID received: ${userId}`);
+    console.log(userId);
 
     // Find the cart associated with the given user ID
     const cart = await Cart.findOne({ orderedBy: userId })
       .populate("products.product", "_id name price") // Populate product details
       .exec();
-
-    console.log("Cart found:", cart); // Debugging: Check if cart is found
 
     // If no cart is found, return a 404 error
     if (!cart) {
@@ -90,7 +88,6 @@ router.get("/:userId", async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching cart:", error); // Debugging: Log the error
     // Pass errors to the error handler middleware
     next(error);
   }
