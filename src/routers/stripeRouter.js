@@ -30,7 +30,6 @@ router.post("/create-payment-intent", async (req, res) => {
         0
       );
 
-      // Simulate discount application
       totalAfterDiscount = couponApplied ? cartTotal * 0.9 : cartTotal;
     } else {
       return res.status(400).json({ error: "Invalid cart data" });
@@ -38,11 +37,13 @@ router.post("/create-payment-intent", async (req, res) => {
 
     const finalAmount = Math.round(totalAfterDiscount * 100); // Amount in cents
 
+    // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmount,
       currency: "usd",
     });
 
+    // Respond with payment intent details
     res.json({
       clientSecret: paymentIntent.client_secret,
       cartTotal,
