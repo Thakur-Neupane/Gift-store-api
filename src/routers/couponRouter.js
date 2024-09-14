@@ -12,7 +12,7 @@ const toUpperCase = (str) => {
 // Create a new coupon
 router.post("/", async (req, res, next) => {
   const { name, expiry, discount } = req.body;
-
+  a;
   if (!name || !expiry || !discount) {
     return res.status(400).json({
       status: "error",
