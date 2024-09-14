@@ -9,7 +9,6 @@ const router = express.Router();
 router.post("/", async (req, res, next) => {
   try {
     const { items, total, userId, title, address } = req.body;
-    console.log(req.body);
 
     if (!items || !items.length) {
       return res.status(400).json({
