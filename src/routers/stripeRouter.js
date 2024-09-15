@@ -1,8 +1,6 @@
 import express from "express";
 import Stripe from "stripe";
 import User from "../models/user/UserSchema.js";
-import Cart from "../models/cart/cartSchema.js";
-import Coupon from "../models/coupon/couponSchema.js"; // Import Coupon model if needed
 
 const router = express.Router();
 
@@ -11,9 +9,10 @@ const stripe = new Stripe(process.env.SECRET_KEY);
 router.post("/create-payment-intent", async (req, res) => {
   try {
     const { userId, cart, couponApplied } = req.body;
-    console.log(req.body);
 
-    // Validate required fields
+    // Log incoming request
+    console.log("Received data:", { userId, cart, couponApplied });
+
     if (!userId || !cart) {
       return res
         .status(400)
@@ -28,21 +27,25 @@ router.post("/create-payment-intent", async (req, res) => {
 
     // Calculate cart totals
     let cartTotal = 0;
-    let totalAfterDiscount = 0;
-
     if (cart && Array.isArray(cart.items)) {
       cartTotal = cart.items.reduce(
         (acc, item) => acc + (item.price || 0) * (item.quantity || 0),
         0
       );
-
-      totalAfterDiscount = couponApplied ? cartTotal * 0.9 : cartTotal;
     } else {
       return res.status(400).json({ error: "Invalid cart data" });
     }
 
-    // Convert to cents for Stripe
+    // Apply discount if applicable
+    const totalAfterDiscount = couponApplied ? cartTotal * 0.9 : cartTotal;
     const finalAmount = Math.round(totalAfterDiscount * 100);
+
+    // Log calculated values
+    console.log("Calculated values:", {
+      cartTotal,
+      totalAfterDiscount,
+      finalAmount,
+    });
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -59,10 +62,7 @@ router.post("/create-payment-intent", async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    res.status(500).json({
-      status: "error",
-      message: error.message || "Something went wrong",
-    });
+    res.status(500).json({ error: "Failed to create payment intent" });
   }
 });
 
