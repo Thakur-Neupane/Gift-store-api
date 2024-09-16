@@ -23,9 +23,9 @@ router.post("/create-payment-intent", async (req, res) => {
 
     // Calculate cart totals
     let cartTotal = 0;
-    if (cart && Array.isArray(cart.items)) {
-      cartTotal = cart.items.reduce(
-        (acc, item) => acc + (item.price || 0) * (item.quantity || 0),
+    if (cart && Array.isArray(cart.products)) {
+      cartTotal = cart.products.reduce(
+        (acc, product) => acc + (product.price || 0) * (product.count || 0),
         0
       );
     } else {
