@@ -3,15 +3,11 @@ import Stripe from "stripe";
 import User from "../models/user/UserSchema.js";
 
 const router = express.Router();
-
 const stripe = new Stripe(process.env.SECRET_KEY);
 
 router.post("/create-payment-intent", async (req, res) => {
   try {
     const { userId, cart, couponApplied } = req.body;
-
-    // Log incoming request
-    console.log("Received data:", { userId, cart, couponApplied });
 
     if (!userId || !cart) {
       return res
@@ -39,13 +35,6 @@ router.post("/create-payment-intent", async (req, res) => {
     // Apply discount if applicable
     const totalAfterDiscount = couponApplied ? cartTotal * 0.9 : cartTotal;
     const finalAmount = Math.round(totalAfterDiscount * 100);
-
-    // Log calculated values
-    console.log("Calculated values:", {
-      cartTotal,
-      totalAfterDiscount,
-      finalAmount,
-    });
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
