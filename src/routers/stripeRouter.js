@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import User from "../models/user/UserSchema.js";
 import Cart from "../models/cart/cartSchema.js";
 import Coupon from "../models/coupon/couponSchema.js";
+
 const router = express.Router();
 const stripe = new Stripe(process.env.SECRET_KEY);
 
@@ -32,8 +33,6 @@ router.post("/create-payment-intent", async (req, res) => {
 
     // Calculate cart totals
     let cartTotal = cart.cartTotal;
-
-    // Apply discount if applicable
     let totalAfterDiscount = cartTotal;
 
     if (couponCode) {
@@ -48,7 +47,8 @@ router.post("/create-payment-intent", async (req, res) => {
       }
     }
 
-    const finalAmount = Math.round(totalAfterDiscount * 100);
+    const finalAmount = Math.round(totalAfterDiscount * 100); // Convert to cents
+    console.log(`Final amount in cents: ${finalAmount}`);
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
