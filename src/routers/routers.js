@@ -51,7 +51,7 @@ export default [
   },
 
   {
-    path: "/api/v1/order",
+    path: "/api/v1/orders",
     middlewares: [orderRouter],
   },
 ];
