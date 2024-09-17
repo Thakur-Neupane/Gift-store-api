@@ -10,7 +10,7 @@ const stripe = new Stripe(process.env.SECRET_KEY);
 
 router.post("/create-payment-intent", async (req, res) => {
   try {
-    const { userId, couponCode } = req.body;
+    const { userId, couponApplied } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
@@ -31,13 +31,13 @@ router.post("/create-payment-intent", async (req, res) => {
       return res.status(404).json({ error: "Cart not found" });
     }
 
-    // Calculate cart totals
-    let cartTotal = cart.cartTotal;
+    // Ensure cartTotal is a number
+    let cartTotal = parseFloat(cart.cartTotal);
     let totalAfterDiscount = cartTotal;
 
-    if (couponCode) {
+    if (couponApplied) {
       // Find the coupon
-      const coupon = await Coupon.findOne({ name: couponCode }).exec();
+      const coupon = await Coupon.findOne({ name: couponApplied }).exec();
       if (coupon) {
         // Apply the discount
         const discountAmount = (cartTotal * coupon.discount) / 100;
@@ -47,7 +47,11 @@ router.post("/create-payment-intent", async (req, res) => {
       }
     }
 
-    const finalAmount = Math.round(totalAfterDiscount * 100); // Convert to cents
+    // Ensure totalAfterDiscount is not negative
+    totalAfterDiscount = Math.max(totalAfterDiscount, 0);
+
+    // Convert totalAfterDiscount to cents for Stripe
+    const finalAmount = Math.round(totalAfterDiscount * 100);
     console.log(`Final amount in cents: ${finalAmount}`);
 
     // Create payment intent with Stripe
