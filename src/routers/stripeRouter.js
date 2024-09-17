@@ -1,18 +1,18 @@
 import express from "express";
 import Stripe from "stripe";
-import User from "../models/user/UserSchema.js";
 
+import User from "../models/user/UserSchema.js";
+import Cart from "../models/cart/cartSchema.js";
+import Coupon from "../models/coupon/couponSchema.js";
 const router = express.Router();
 const stripe = new Stripe(process.env.SECRET_KEY);
 
 router.post("/create-payment-intent", async (req, res) => {
   try {
-    const { userId, cart, couponApplied } = req.body;
+    const { userId, couponCode } = req.body;
 
-    if (!userId || !cart) {
-      return res
-        .status(400)
-        .json({ error: "User ID and cart data are required" });
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
     }
 
     // Fetch user from the database
@@ -21,19 +21,33 @@ router.post("/create-payment-intent", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Calculate cart totals
-    let cartTotal = 0;
-    if (cart && Array.isArray(cart.products)) {
-      cartTotal = cart.products.reduce(
-        (acc, product) => acc + (product.price || 0) * (product.count || 0),
-        0
-      );
-    } else {
-      return res.status(400).json({ error: "Invalid cart data" });
+    // Fetch cart from the database
+    const cart = await Cart.findOne({ orderedBy: user._id })
+      .populate("products.product", "_id title price")
+      .exec();
+
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
     }
 
+    // Calculate cart totals
+    let cartTotal = cart.cartTotal;
+
     // Apply discount if applicable
-    const totalAfterDiscount = couponApplied ? cartTotal * 0.9 : cartTotal;
+    let totalAfterDiscount = cartTotal;
+
+    if (couponCode) {
+      // Find the coupon
+      const coupon = await Coupon.findOne({ name: couponCode }).exec();
+      if (coupon) {
+        // Apply the discount
+        const discountAmount = (cartTotal * coupon.discount) / 100;
+        totalAfterDiscount = cartTotal - discountAmount;
+      } else {
+        return res.status(400).json({ error: "Invalid coupon code" });
+      }
+    }
+
     const finalAmount = Math.round(totalAfterDiscount * 100);
 
     // Create payment intent with Stripe

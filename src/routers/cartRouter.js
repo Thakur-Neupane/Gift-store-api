@@ -233,8 +233,10 @@ router.post("/apply-coupon", async (req, res) => {
     // Update cart with the new total after discount
     const updatedCart = await Cart.findOneAndUpdate(
       { orderedBy: user._id },
-      { cartTotal: cartTotal },
-      { totalAfterDiscount: totalAfterDiscount.toFixed(2) },
+      {
+        cartTotal: cartTotal, // Optionally update if necessary
+        totalAfterDiscount: totalAfterDiscount.toFixed(2),
+      },
       { new: true }
     ).exec();
 
