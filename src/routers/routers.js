@@ -7,6 +7,7 @@ import reviewRouter from "./reviewRouter.js";
 import cartRouter from "./cartRouter.js";
 import couponRouter from "./couponRouter.js";
 import stripeRouter from "./stripeRouter.js";
+import orderRouter from "./orderRouter.js";
 import { auth } from "../middlewares/auth.js";
 
 export default [
@@ -47,5 +48,10 @@ export default [
   {
     path: "/api/v1/payment",
     middlewares: [stripeRouter],
+  },
+
+  {
+    path: "/api/v1/order",
+    middlewares: [orderRouter],
   },
 ];
