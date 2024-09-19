@@ -63,6 +63,7 @@ router.post("/", async (req, res, next) => {
 router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
+    console.log(userId);
 
     // Find the cart associated with the given user ID
     const cart = await Cart.findOne({ orderedBy: userId })
@@ -81,11 +82,12 @@ router.get("/:userId", async (req, res, next) => {
     res.json({
       status: "success",
       cart: {
-        ...cart.toObject(),
+        ...cart.toObject(), // Convert cart to a plain object to include virtual fields
         cartTotal: cart.cartTotal.toFixed(2), // Ensure total is formatted to two decimal places
       },
     });
   } catch (error) {
+    // Pass errors to the error handler middleware
     next(error);
   }
 });
@@ -166,7 +168,7 @@ router.delete("/:userId", async (req, res, next) => {
   }
 });
 
-// Clear all carts (optional)
+// Example route for clearing all carts (if needed)
 router.delete("/", async (req, res, next) => {
   try {
     await Cart.deleteMany({});
