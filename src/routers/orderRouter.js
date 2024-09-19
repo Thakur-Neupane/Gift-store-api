@@ -44,7 +44,21 @@ router.post("/createOrder", async (req, res) => {
     const existingProducts = await Product.find({
       _id: { $in: productIds },
     }).exec();
-    console.log("Existing Products in DB:", existingProducts);
+
+    console.log("Product IDs from Cart:", productIds);
+    console.log(
+      "Existing Products in DB:",
+      existingProducts.map((p) => p._id.toString())
+    );
+
+    // Log missing products
+    const existingProductIds = existingProducts.map((p) => p._id.toString());
+    const missingProductIds = productIds.filter(
+      (id) => !existingProductIds.includes(id)
+    );
+    if (missingProductIds.length > 0) {
+      console.error("Products not found in DB:", missingProductIds);
+    }
 
     // Create a new order
     const newOrder = new Order({
@@ -57,22 +71,15 @@ router.post("/createOrder", async (req, res) => {
     console.log("Order saved successfully:", newOrder);
 
     // Prepare bulk update operations
-    const bulkOption = cart.products
-      .map((item) => {
-        try {
-          const productId = mongoose.Types.ObjectId(item.product._id); // Convert to ObjectId
-          return {
-            updateOne: {
-              filter: { _id: productId },
-              update: { $inc: { quantity: -item.count, sold: item.count } },
-            },
-          };
-        } catch (error) {
-          console.error("Invalid product ID:", item.product._id);
-          return null; // Skip invalid IDs
-        }
-      })
-      .filter((op) => op !== null); // Remove null entries
+    const bulkOption = cart.products.map((item) => {
+      const productId = item.product._id; // No need for ObjectId conversion if already an ObjectId
+      return {
+        updateOne: {
+          filter: { _id: productId },
+          update: { $inc: { quantity: -item.count, sold: item.count } },
+        },
+      };
+    });
 
     console.log("Bulk operations:", bulkOption);
 
@@ -82,6 +89,8 @@ router.post("/createOrder", async (req, res) => {
 
     if (result.modifiedCount === 0) {
       console.warn("No documents were updated.");
+    } else {
+      console.log("Documents updated:", result.modifiedCount);
     }
 
     res.json({ ok: true });
