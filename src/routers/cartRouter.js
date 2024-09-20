@@ -1,7 +1,7 @@
 import express from "express";
 import Cart from "../models/cart/cartSchema.js";
 import User from "../models/user/UserSchema.js";
-import Coupon from "../models/coupon/couponSchema.js"; // Import the Coupon model
+import Coupon from "../models/coupon/couponSchema.js";
 
 const router = express.Router();
 
@@ -10,6 +10,7 @@ router.post("/", async (req, res, next) => {
   try {
     const { items, total, userId, title, address } = req.body;
 
+    // Validate input
     if (!items || !items.length) {
       return res.status(400).json({
         status: "error",
@@ -18,7 +19,7 @@ router.post("/", async (req, res, next) => {
     }
 
     // Find the user
-    const user = await User.findById(userId).exec();
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -28,15 +29,15 @@ router.post("/", async (req, res, next) => {
 
     // Map items to the correct format
     const formattedItems = items.map((item) => ({
-      product: item.product, // Ensure it's the correct field
+      product: item.product,
       count: item.count,
       color: item.color,
       price: item.price,
-      title: item.title || undefined, // title may not be present
+      title: item.title || undefined,
     }));
 
     // Remove existing cart for the user
-    await Cart.findOneAndDelete({ orderedBy: user._id }).exec();
+    await Cart.findOneAndDelete({ orderedBy: user._id });
 
     // Create and save a new cart
     const newCart = new Cart({
@@ -63,14 +64,12 @@ router.post("/", async (req, res, next) => {
 router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
-    console.log(userId);
 
     // Find the cart associated with the given user ID
     const cart = await Cart.findOne({ orderedBy: userId })
-      .populate("products.product", "_id name price") // Populate product details
+      .populate("products.product", "_id name price")
       .exec();
 
-    // If no cart is found, return a 404 error
     if (!cart) {
       return res.status(404).json({
         status: "error",
@@ -78,22 +77,20 @@ router.get("/:userId", async (req, res, next) => {
       });
     }
 
-    // Respond with the cart details
     res.json({
       status: "success",
       cart: {
-        ...cart.toObject(), // Convert cart to a plain object to include virtual fields
-        cartTotal: cart.cartTotal.toFixed(2), // Ensure total is formatted to two decimal places
+        ...cart.toObject(),
+        cartTotal: cart.cartTotal.toFixed(2),
       },
     });
   } catch (error) {
-    // Pass errors to the error handler middleware
     next(error);
   }
 });
 
 // Update address for the cart
-router.put("/update-address/:userId", async (req, res) => {
+router.put("/update-address/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
     const address = req.body;
@@ -124,7 +121,7 @@ router.put("/update-address/:userId", async (req, res) => {
       { orderedBy: userId },
       { address },
       { new: true }
-    ).exec();
+    );
 
     if (!cart) {
       return res.status(404).json({
@@ -138,10 +135,7 @@ router.put("/update-address/:userId", async (req, res) => {
       cart,
     });
   } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
+    next(error);
   }
 });
 
@@ -168,7 +162,7 @@ router.delete("/:userId", async (req, res, next) => {
   }
 });
 
-// Example route for clearing all carts (if needed)
+// Clear all carts
 router.delete("/", async (req, res, next) => {
   try {
     await Cart.deleteMany({});
@@ -182,11 +176,10 @@ router.delete("/", async (req, res, next) => {
 });
 
 // Apply coupon to user cart
-router.post("/apply-coupon", async (req, res) => {
+router.post("/apply-coupon", async (req, res, next) => {
   try {
     const { coupon, userId } = req.body;
 
-    // Validate input
     if (!coupon || !userId) {
       return res.status(400).json({
         status: "error",
@@ -194,8 +187,8 @@ router.post("/apply-coupon", async (req, res) => {
       });
     }
 
-    // Find the coupon
-    const validCoupon = await Coupon.findOne({ name: coupon }).exec();
+    // Validate coupon
+    const validCoupon = await Coupon.findOne({ name: coupon });
     if (!validCoupon) {
       return res.status(400).json({
         status: "error",
@@ -203,8 +196,8 @@ router.post("/apply-coupon", async (req, res) => {
       });
     }
 
-    // Find the user
-    const user = await User.findById(userId).exec();
+    // Find the user and cart
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
         status: "error",
@@ -212,10 +205,10 @@ router.post("/apply-coupon", async (req, res) => {
       });
     }
 
-    // Find the cart
-    const cart = await Cart.findOne({ orderedBy: user._id })
-      .populate("products.product", "_id title price")
-      .exec();
+    const cart = await Cart.findOne({ orderedBy: user._id }).populate(
+      "products.product",
+      "_id title price"
+    );
 
     if (!cart) {
       return res.status(404).json({
@@ -224,21 +217,18 @@ router.post("/apply-coupon", async (req, res) => {
       });
     }
 
-    const { cartTotal } = cart;
+    // Calculate discount
+    const discountAmount = (cart.cartTotal * validCoupon.discount) / 100;
+    const totalAfterDiscount = cart.cartTotal - discountAmount;
 
-    // Calculate the discount amount and total after discount
-    const discountAmount = (cartTotal * validCoupon.discount) / 100;
-    const totalAfterDiscount = cartTotal - discountAmount;
-
-    // Update cart with the new total after discount
+    // Update cart with new total after discount
     const updatedCart = await Cart.findOneAndUpdate(
       { orderedBy: user._id },
       {
-        cartTotal: cartTotal, // Optionally update if necessary
-        totalAfterDiscount: totalAfterDiscount.toFixed(2),
+        cartTotal: totalAfterDiscount.toFixed(2),
       },
       { new: true }
-    ).exec();
+    );
 
     res.json({
       status: "success",
@@ -247,11 +237,7 @@ router.post("/apply-coupon", async (req, res) => {
       cart: updatedCart,
     });
   } catch (error) {
-    console.error("Error applying coupon:", error);
-    res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
+    next(error);
   }
 });
 
