@@ -3,7 +3,6 @@ import Coupon from "../models/coupon/couponSchema.js";
 
 const router = express.Router();
 
-// Utility function to convert a string to uppercase
 const toUpperCase = (str) => {
   if (!str) return str; // Handle empty or undefined strings
   return str.toUpperCase(); // Convert the entire string to uppercase
