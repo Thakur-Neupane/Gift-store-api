@@ -1,11 +1,10 @@
 import express from "express";
 import Cart from "../models/cart/cartSchema.js";
 import User from "../models/user/UserSchema.js";
-import Coupon from "../models/coupon/couponSchema.js"; // Import the Coupon model
+import Coupon from "../models/coupon/couponSchema.js";
 
 const router = express.Router();
 
-// Create or update cart with optional address
 router.post("/", async (req, res, next) => {
   try {
     const { items, total, userId, title, address } = req.body;

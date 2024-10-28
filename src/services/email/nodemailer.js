@@ -29,13 +29,13 @@ const emailProcessor = async (mailBodyObj) => {
 // async..await is not allowed in global scope, must use a wrapper
 export const emailVerificationMail = ({ email, fName, url }) => {
   const obj = {
-    from: `"Tech Store 👻" <${process.env.SMTP_EMAIL}>`, // sender address
+    from: `"RS Store 👻" <${process.env.SMTP_EMAIL}>`, // sender address
     to: email, // list of receivers
     subject: "Action Required", // Subject line
     text: `hellow there, pelase follow the link to verify you account ${url}`, // plain text body
     html: `
     Hello ${fName},
-<br />
+<br />  
 <br />
 
 <p>
