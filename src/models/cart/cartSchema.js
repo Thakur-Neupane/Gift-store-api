@@ -44,7 +44,7 @@ const cartSchema = new mongoose.Schema(
     address: {
       unitNumber: { type: String },
       street: { type: String },
-      city: { type: String }, x      state: { type: String },
+      city: { type: String },
       zipCode: { type: String },
       country: { type: String },
       phoneNumber: { type: String },
